@@ -1,0 +1,133 @@
+# Demo Program
+
+		Screensay: "She said, 'Hello World!'" (Hello!)
+	(What a nifty language!)
+		Screensay: "I have [4/2] learn it!"
+		This is new variable cars. Set cars' value to 100.
+		Change car's value to "dog".  
+
+
+
+
+
+
+## (Ex1) Printing --> screensay
+
+# Does this get mixed up with the meaning of quotation marks?
+
+# He said, 
+Show "Hello World"
+Show "I'd much rather you 'not' "
+
+OR
+
+Say "Hello World"
+Show me Hello World
+
+OR 
+
+screensay "He said, 'Hello World'"
+
+## (Ex2) Comments --> (comment)
+
+Thoughts: I don't want this to be too lengthy. But I could use Aside: 
+
+1) Aside: comment. 
+2) ( comment )
+3) | comment |
+4) <comment>
+5) ?What is this line doing?
+6) -Here's a comment-
+
+## (ex3) Math --> [ ]
+
+	+ -> +
+	- -> -
+	= -> = 
+	> -> >
+	< -> <
+	* -> *
+	"[25 +6/4]"
+
+Thoughts:
+The real problem comes with screensay and then doing math
+I picked the # sign because it stands for math. 
+
+Screensay: "I will now count my chickens:"
+1) Screensay: "Hens, #25 + 30/6#"
+2) Screensay: "Hens, (25 + 30/6)"
+3) Screensay: "Hens, [25 + 30/6]"
+4) Screensay: "Hens, ~25 + 30/6~" 
+5) Screensay: "Hens, <25 + 30/6>"
+6) Screensay: "Hens"; 25 + 30/6 # very similar to Python 
+
+I like much better the way that the parentheses look. 
+So I could potentially change comments to ^Hey here's a comment^. I'm okay with using square brackets for now. 
+
+## (ex4) Variables 
+
+Variable declaration-->
+	This is cars, a new variable. Set cars' value to 100. 
+Changing a variable's value-->
+	Change cars' value to 200. 
+
+
+# Thoughts: While I like pronouns, and think that would be an interesting challenge, I think people have a lot of trouble with pronouns. Actually, I'd really like to support both. 
+
+Given time, I will support more options. Right now, I'll choose 8)ish.
+
+1) This is cars. The value of cars is 100. 
+1b) This is cars. Car's value is 100. 
+2) This is cars. Its value is 100. # This is cool mostly because I want to handle pronouns
+3) This is cars, a variable. Its value is 100. 
+4) This is cars, a variable; its value is 100. 
+5) Cars, a variable, has the value 100. 
+6) New variable cars has the value 100.
+7) This is space_in_a_car: its value is 4.0. 
+8) This is new variable cars. Set cars' value to 100.
+9) This is cars, a new variable. Set cars' value to 100. 
+ 
+# Zed shaw code:
+This is new variable cars. Set cars' value to 100.
+
+## (ex5) Putting variables in strings
+
+	This is my_name, a new variable. Set my_name's value
+to "Joy"
+	This is my_age, a new variable. Set my_age's value to
+1000.
+	This is my_height, a new variable. Set my_height's
+value to 2000.
+
+	Screensay: "Let's talk about [text]." [text]
+	Screensay: "She's [integer] inches tall." [integer]
+	
+
+
+
+
+
+
+
+
+# Things I will need to handle:
+Capitalization
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+This is L.
+L is a list.
+
