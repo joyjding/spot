@@ -4,7 +4,6 @@
 
 import re # import regex
 
-
 class symbol_base(object):
 	id = None # node/token type name
 	value = None # used by literal tokens
@@ -81,87 +80,54 @@ def infix_r(id,bp):
 
 symbol("(literal)").nud = lambda self:self #what happened here?
 
-
-
-# Class Definitions - Commented out now that we can generate tokens		
-
-# class literal_token:
-# 	def __init__(self, value):
-# 		self.value = int(value)
-# 	def nud(self):
-# 		return self
-# 	def __repr__(self):
-# 		return "(literal %s)" %self.value
-
-# class operator_add_token:
-# 	lbp = 10
-# 	def nud(self):
-# 		self.first = expression(100)
-# 		self.second = None
-# 		return self
-# 	def led(self, left):
-# 		self.first = left
-# 		self.second = expression(10)
-# 		return self
-# 	def __repr__(self):
-# 		return "(add %s %s)" % (self.first, self.second)
-# class operator_sub_token:
-# 	lbp = 10
-# 	def nud(self):
-# 		self.first = -expression(100)
-# 		self.second = None
-# 		return self
-# 	def led(self, left):
-# 		self.first = left
-# 		self.second = expression(100) # should this be -expression?
-# 	def __repr__(self):
-# 		return "(sub %s %s)" % (self.first, self.second) 
-
-# class operator_mul_token:
-# 	lbp = 20
-# 	def led(self, left):
-# 		self.first = left
-# 		self.second = expression(20)
-# 		return self
-# 	def __repr__(self):
-# 		return "(mul %s %s)" % (self.first, self.second)
-# class operator_div_token:
-# 	lbp = 20
-# 	def led(self, left):
-# 		self.first = left
-# 		self.second = expression(20)
-# 		return self
-# 	def __repr__(self):
-# 		return "(div %s %s)" %(self.first, self.second) 
-
-# class operator_pow_token:
-# 	lbp = 30
-# 	def led(self, left):
-# 		self.first = left
-# 		self.second = expression(30-1)
-# 		return self
-# 	def __repr__(self):
-# 		return "(pow %s %s)" %(self.first, self.second)
-# class end_token:
-# 	lbp = 0
-
 #Tokenizing
 token_pat = re.compile("\s*(?:(\d+)|(\*\*|.))")
 
+#This first half of the tokenizer turns the source program into a stream of literals
+#names and operators
+def tokenize_python(program):
+	import tokenize # for tokenizer
+	from cStringIO import StringIO # for tokenizer
+
+	type_map = {
+	tokenize.NUMBER: "(literal)",
+	tokenize.STRING: "(literal)",
+	tokenize.OP: "(operator)",
+	tokenize.NAME: "(name)",
+				}
+
+	for t in tokenize.generate_tokens(StringIO(program).next):
+		try:
+			yield type_map[t[0]], t[1]
+		except KeyError:
+			if t[0] == tokenize.ENDMARKER:
+				break
+			else:
+				raise SyntaxError("Syntax error")
+	yield "(end)", "(end)" #apparently it was a typo in this line that caused the bug. originally, I had "end", "(end)"
+
+#This second half of the tokenizer turns those into token instances.
+#It checks operators and names agains the symbol table
+# Pseudo-symbol (name) is used for all other names
 def tokenize(program):
-	for number, operator in token_pat.findall(program):
-		if number:
-			symbol = symbol_table["(literal)"]
+	for id, value in tokenize_python(program):
+		if id == "(literal)":
+			symbol = symbol_table[id]
 			s = symbol()
-			s.value = number
-			yield s
+			s.value = value
 		else: 
-			symbol = symbol_table.get(operator)
-			if not symbol:
-				raise SyntaxError("Unknown operator")
-			yield symbol()
-	symbol = symbol_table["(end)"]
-	yield symbol
+			#for name or operator
+			symbol = symbol_table.get(value)
+			if symbol:
+				s = symbol()
+			elif id == "(name)":
+				symbol = symbol_table["(literal)"]
+				s = symbol()
+				s.value = value
+			else:
+				raise SyntaxError("Unknown operator (%r)" %id)
+		yield s
+
 # Parsing
 def expression(rbp=0):
 	global token
@@ -175,7 +141,7 @@ def expression(rbp=0):
 	return left
 
 def parse(program):
-	global token, next
+	global token, next 
 	next = tokenize(program).next
 	token = next()
 	return expression()
