@@ -37,48 +37,96 @@ def symbol(id, bp=0):
 	else:
 		s.lbp = max(bp, s.lbp)
 	return s
-# populating the symbol table
-symbol("(literal)")
-symbol("+", 10)
-symbol("-", 10)
-symbol("*", 20)
-symbol("/", 20)
-symbol("**", 30)
-symbol("(end)")
 
-# defining led methods for symbols that need additional behavior
-
-def infix(id, bp):
+def infix(id, bp): #defines led methods for symbols that need additional behavior
 	def led(self, left):
 		self.first = left
 		self.second = expression(bp)
 		return self
 	symbol(id, bp).led = led
 
-infix ("+", 10)
-infix ("-", 10)
-infix ("*", 20)
-infix("/", 20)
-
-# providing helper functions for nud methods, and for operators with right associativity
-def prefix(id, bp):
+def prefix(id, bp): # helper function for symbols with nud methods
 	def nud(self):
 		self.first = expression(bp)
 		self.second = None
 		return self
 	symbol(id).nud = nud
 
-prefix ("+", 100)
-prefix("-", 100)
-
-def infix_r(id,bp):
+def infix_r(id, bp): #helper function for operators with right associativity
 	def led(self, left):
 		self.first = left
 		self.second = expression(bp-1)
 		return self
 	symbol(id, bp).led = led
 
-symbol("(literal)").nud = lambda self:self #what happened here?
+symbol("lambda", 20)
+symbol("if", 20) #if considred a symbol. ternary form?
+infix_r("or", 30)
+infix_r("and", 40)
+prefix("not", 50)
+
+infix("in", 60) #in, not in. Counts for in and not in?
+infix("is", 60) #is, is not
+infix("<", 60)
+infix("<=", 60)
+infix(">", 60)
+infix(">=", 60)
+infix("<>", 60)
+infix ("!=", 60)
+infix ("==", 60)
+
+infix("|", 70)
+infix("^", 80) 
+infix("&", 90)
+
+infix("<<", 100) 
+infix(">>", 100)
+
+infix("+", 110)
+infix("-", 110)
+
+infix("*", 120)
+infix("/", 120)
+infix("//", 120)
+infix("%", 120)
+
+prefix("-", 130) 
+prefix("+", 130)
+prefix("~", 130)
+
+infix_r("**", 140)
+
+symbol(".", 150)
+symbol("[", 150)
+symbol("(", 150) #parentheses has the highest binding power, which makes sense
+
+
+
+
+# populating the symbol table
+symbol("(literal)")
+symbol("+", 10)
+symbol("-", 10)
+symbol("*", 20)
+
+symbol("/", 20)
+symbol("**", 30)
+
+
+# infix ("+", 10)
+# infix ("-", 10)
+# infix ("*", 20)
+# infix("/", 20)
+# infix_r("or", 30)
+
+# infix_r("**", 30)
+
+# prefix ("+", 100)
+# prefix("-", 100)
+
+symbol("(literal)").nud = lambda self: self #what happened here?
+symbol("(name)").nud = lambda self: self
+symbol("(end)")
 
 #Tokenizing
 token_pat = re.compile("\s*(?:(\d+)|(\*\*|.))")
