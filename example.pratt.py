@@ -59,6 +59,28 @@ def infix_r(id, bp): #helper function for operators with right associativity
 		return self
 	symbol(id, bp).led = led
 
+def advance (id=None):
+	global token
+	if id and token.id !=id:
+		raise SyntaxError("Expected %r" % id)
+	token = next()
+
+def nud(self):
+	expr = expression()
+	advance(")")
+	return expr
+
+def led(self, left):
+	self.first = left
+	self.second = expression()
+	advance("else")
+	self.third = expression()
+	return self
+
+
+
+
+
 symbol("lambda", 20)
 symbol("if", 20) #if considred a symbol. ternary form?
 infix_r("or", 30)
@@ -99,7 +121,7 @@ infix_r("**", 140)
 symbol(".", 150)
 symbol("[", 150)
 symbol("(", 150) #parentheses has the highest binding power, which makes sense
-
+symbol(")")
 
 
 
@@ -112,21 +134,14 @@ symbol("*", 20)
 symbol("/", 20)
 symbol("**", 30)
 
-
-# infix ("+", 10)
-# infix ("-", 10)
-# infix ("*", 20)
-# infix("/", 20)
-# infix_r("or", 30)
-
-# infix_r("**", 30)
-
-# prefix ("+", 100)
-# prefix("-", 100)
-
 symbol("(literal)").nud = lambda self: self #what happened here?
 symbol("(name)").nud = lambda self: self
+symbol("(").nud = nud
+symbol("if").led = led
+symbol ("else")
 symbol("(end)")
+
+
 
 #Tokenizing
 token_pat = re.compile("\s*(?:(\d+)|(\*\*|.))")
