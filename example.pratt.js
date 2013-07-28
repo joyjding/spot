@@ -120,6 +120,160 @@ var advance = function (id) //set the variable name advance to the value of a fu
 	return token;
 };
 
+///////////////////SCOPE////////////////////
+
+//Most languages have some notation for defining new symbols (such as variable names)
+//In a very simple language, when we encounter a new word, we might give it a definition and put it in the symbol table
+//In a more sophisticated language, we would want to have scope
+//Scope gives the programmer control over the lifespan and visibility of a variable
+//So for instance, global means that a variable has visibility to everything
+
+//A scope is a region of a program in which a variable is defined and accessible
+//Scopes can be nested inside other scopes
+//Variables defined in a scope are not visible outside of the scope
+
+// the current scope object is kept in the scope variable
+var scope; 
+
+//original_scope is the prototype for all scope objects
+//It contains a define method that is used to define new variables in the scope
+//The define method transforms a name token into a variable token
+//It produces an error if: the variable has already been defined in the scope, 
+//or if the name has already been used as a reserved word
+
+var itself = function() 
+{
+	return this; //what does this do?
+};
+
+var original_scope = 
+{
+	define: function(n) //Defines a function without a name that takes n. 	
+	//I'm guessing n is a name token object
+	{
+		var t = this.def[n.value];
+		//What does this refer to? I'm guessing:original_scope. 
+		//How can this.def be used here when it is not declared until later? line
+		//So this is saying set the value of t to be object n
+		//why not just var t = n?
+		
+		//This if loop checks if name has already been used as a reserved word				
+		if (typeof t === "object") //if t is an object, 
+		{
+			n.error(t.reserved ?
+			//I really don't understand .error
+			//is .error a method available on any object?
+			//What does this ? do?
+			//When did we define .reserved?
+				"Already reserved." :
+				"Already defined.");
+		} 
+		//Here's where we define all the default attributes of original_scope
+		//If it were me, I think I'd put this stuff before the if loop
+		//That way, I'd have the default attributes, and the if could override if necessary 
+		this.def[n.value] = n;
+		n.reserved = false;
+		n.nud = itself;
+		n.led = null;
+		n.lbp = 0;
+		n.scope = scope;
+		return n;
+	},
+
+	//The find function is used to find the definition of a name
+	//It starts with the current scope, and seeks
+	//if necessary back through the chain of parent scopes, and ultimately to the symbol table
+	//It returns symbol_table["name"] if it cannot find a definition
+
+	//When it finds a value, it tests it to determine that it is neither undefined nor a function
+	//undefined would mean an undeclared name, which I'm taking to mean that it has never been assigned a value
+	//if it's a function, it would indicate a collision with an inherited method
+	//I'm taking that collision to mean one name means multiple things within the same scope
+	find: function(n) 
+	{
+		var e = this, o; //Is this equivalent to: 
+								//var e = this
+								//var e = o
+		while (true) 
+		{
+			o = e.def[n]; //this seems convoluted. Set o to be the value of e.def[n]
+			//okay based on the check below, it seems it's to save different bits to parts of o
+			
+			//if o exists, and type of o is not a function
+			if (o && typeof o !== "function")
+			{
+				return e.def[n];
+			}
+			//set e to be e's parent
+			e = e.parent;
+			//if e (which is e.parent) does not exist...
+			if (!e) 
+			{
+				o = symbol_table[n]; //how does this configuration work? 
+				//set o equal to symbol_table[n]
+				//if symbol_table[n] doesn't exist...does o become None?
+				return o && typeof o !=='function' ?
+						o : symbol_table["(name)"];
+			} 
+		}
+	},
+
+	//The pop method closes a scope, giving focus back to the parent.
+
+	pop: function() 
+	{
+		scope = this.parent; //reassigns scope to being the parent scope
+	},
+
+	//The reserve method indicates that a name has been used as reserved word in the current scope
+	reserve: function(n)
+	{
+		if (n.arity !== "name" || n.reserved) //if neither n's type is "name" nor n.reserved is true, move on
+		{
+			return; 
+			//what does this return? 
+			//I'm guessing it's one of those I need to return something in js so...here's a return things
+		}
+		var t = this.def[n.value]; //I really don't undersatnd this .def method
+	//This is the handle both conditions (if n's type is name or if n.reserved is true)
+		if (t) //if this.def[n.value] exists
+		{
+			if (t.reserved) //if t is reserved, which must be a boolean
+			{
+				return; //don't do anything
+			}	
+
+			if (t.arity === "name") //if the type of t is name
+			{
+				n.error("Already defined.");
+			}
+			this.def[n.value] = n;
+			n.reserved = true;
+		}
+	};
+
+	//We need a policy for served words. 
+	//In some languages, words that are used structurally (like if) are reserved, and cannot be used as variable names.
+	//The flexibility of this parser allows us to have a more useful policy (which I disagree with).
+	//For example, we can say: in any function, any name may be used as a structure word or as a variable, but not both.
+	//We will reserve words locally only after they are used as reserved words.
+	//Crockford argues that this makes things better: 
+	//for language designers, b/c adding new structure words to the language will not break existing programs
+	//and for programmers, b/c they are not hampered by irrelevant restrictions on name usage
+	//(I'm not sure if I agree with this. I probably don't.)
+	//(I think that there are enough words for us to distinguish, rather than duplicate)
+	//(Also when would I ever want a variable named if?)
+	var new_scope = function() 
+	{
+		var s = scope;
+		scope = Object.create(original_scope); //here we create an instance of a scope object!
+		scope.def = {};
+		scope.parent = s; //wait, how is scope its own parent????
+		return scope
+	};
+
+
+
 
 
 
