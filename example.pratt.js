@@ -252,7 +252,7 @@ var original_scope =
 		}
 	};
 
-	//We need a policy for served words. 
+	//We need a policy for reserved words. 
 	//In some languages, words that are used structurally (like if) are reserved, and cannot be used as variable names.
 	//The flexibility of this parser allows us to have a more useful policy (which I disagree with).
 	//For example, we can say: in any function, any name may be used as a structure word or as a variable, but not both.
@@ -272,6 +272,35 @@ var original_scope =
 		return scope
 	};
 
+///////////////////PRECEDENCE////////////////////
+
+//Tokens are objects that have methods that allow them to:
+//make precedence decisions, match other tokens, and build trees
+//(and, in a more ambitious project, check types and optimize and generate code)
+
+//The basic precedence problem: given an operand between 2 operators, is the operand bound to the left operator or the right?
+	//d A e B f
+//If A and B are operators, does e bind to A or B? 
+	//(d A e) B f   or   d A (e B f)?
+//Here, we develop a technique that uses token objects whose members include:
+//binding powers (or precedence levels), and simple methods called nud(null denotation) and led (left denotation)
+//A nud method does not care about the tokens to the left.
+//A led method cares about tokens to the left.
+//A nud method is used by values(such as variables and literals) and by prefix operators.
+//A led method is used by infix operators and suffix operators. 
+//A token may have both a nud method and a led method. 
+//For example, - might be both a prefix operator (negation) and an infix operator (subtraction), so it woudld have both. 
+
+//In our parser we will use these as binding powers:
+	// 0 --- non-binding operators like ;
+	//10 --- assignment operators like =
+	//20 --- ?
+	//30 --- || &&
+	//40 --- relational operators like ===
+	//50 --- + -
+	//60 * /
+	//70 --- unary operators like !
+	//80 --- . [ (
 
 
 
