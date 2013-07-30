@@ -6,15 +6,15 @@
 
 //Every token, such as an operator or identifier, will inherit from a symbol.
 //All symbols (which will determine the types of tokens) will be kept in a symbol_table object
-var symbol_table = {}; //empty object?
+var symbol_table = {}; //empty object? -- [It is an object that you can then put stuff in.]  
 
 //Original_symbol is the prototype object for all other symbol objects.
-//Comes with a nud and led functions that will be usually be overriden.
-var original_symbol =  
+//Comes with a nud and led functions that will be usually be overridden.
+var original_symbol =  //-- [helpful to think of this as a class]
 {
 	nud: function() 
 	{
-		this.error("Undefined.");
+		this.error("Undefined."); //what is this .error? I'm guessing it's an inbuilt js method--[]
 	},
 	led: function(left) 
 	{
@@ -27,28 +27,34 @@ var original_symbol =
 //If the symbol already exists in the symbol_table, the function returns that symbol object.
 //Otherwise, it makes a new symbol object that inherits from the original_symbol, stores it in the symbol table, and returns it. 
 //A symbol object initially contains an id, a value, a left binding power, and the stuff inherited from original_symbol.
-var symbol = function(id, bp) //
+//--[This function both makes symbols, 
+var symbol = function(id, bp)
 {
-	var s = symbol_table[id] //Why doesn't this fail if there is no entry for id?
+	var s = symbol_table[id] //Why doesn't this fail if there is no entry for id?--[returns undefined]
+	//[in js you can access any attribute with either dot notation,symbol_table.foo or bracket notation, symbol_table['foo']  ]
+	//an object is just a key value store. It's like a dictionary that is not choosy.
 	bp = bp || 0; //attribute bp = bp from optional argument, otherwise 0 
 	if (s) //if s is not None (does symbol_table[id] act like get in Python?)
 	{
 		if (bp >= s.lbp) //if lbp in symbol_table lookup is less than bp
 		{
-			s.lbp = bp; //set lbp to bp for this symbol object
+			s.lbp = bp; //set lbp to bp for the symbol object in symbol_table, updating it
 		}
 	} else //if s is None
 	{
 		s = Object.create(original_symbol) //create s, inheriting from original_symbol
 		s.id = s.value = id; //set s.value to id argument, set s.id to id argument
-		s.lbp = bp; //set s.lbp to bp argument
+		//s.value = id;
+		//s.id = s.value;
+		s.lbp = bp; //--[Add an attribute to s with the key lbp and set it equal to bp argument]
 		symbol_table[id] = s; //create an entry in symbol table[id arg], set equal to s
+		//--[this could also be written as symbol_table.id = s]
 	}
 	return s; //return symbol object
 };
 
 //Now to add some symbols to our symbol table:
-symbol(":"); //create a new symbol with id ":"
+symbol(":"); //create a new symbol with id ":", binding power set to 0 by default
 symbol(";");
 symbol(",");
 symbol(")");
@@ -61,7 +67,8 @@ symbol("(name)"); //prototype for new names, such as variable names.
 ///////////////////TOKENS////////////////////
 
 //Assuming that the source text has been transformed into an array of simple token objects(tokens),
-//each containing a type member("name", "string", "number", or "operator")
+//each containing a type member("name", "string", "number", or "operator") 
+	//--[Here member just means an attribute, eg. t.type = "string" etc]
 
 //the token variable always contains the current token LOOK GLOBAL VARIABLE
 
@@ -74,28 +81,30 @@ var token;
 //Its arity may be changed later to "binary", "unary", or "statement" when we know more about its role in the program.
 
 var advance = function (id) //set the variable name advance to the value of a function that optionally takes id
-//Are all parameters optional? How does this function know that the param is optional?
+//Are all parameters optional? [In JS, it's up to the function writer to handle that]
 {
-	var a, o, t, v;
+	var a, o, t, v; //super weird declaration in advance without a value-[for scoping, so later o usage is available to the whole function]
 	//check that there is no id error
-	if (id && token.id !== id) //If both id and token.id do not equal id WEIRD
+	if (id && (token.id !== id)) //If both id and token.id do not equal id WEIRD --[Added helpful parentheses]
+	//--[if id is not undefined and if token.id is not equal to id]
 	{
-		token.error("Expected '" + id + "'.")
+		token.error("Expected '" + id + "'."); //[.error might not exist. errrr Use "throw new Error("asdf")]
 	}
 	//check to see if token stream has ended
-	if (token_nr >= tokens.length) //what is token_nr? I guess if num tokens>=length of tokens array
+	if (token_nr >= tokens.length) //what is token_nr? I guess if num tokens>=length of tokens array [part of assumed token machine]
+	//--[could be replaced by if(tokens), if the token machine destroys tokens as it goes along]
 	{
 		token = symbol_table["(end)"];
-		return; //what is being returned here?
+		return; //ends the entire function --[function drops mic, peaces out]
 	}
 	//now we get to the good part.
 	t = tokens[token_nr]; //Set t = to the token at tokens[token_nr];
 	token_nr +=1 //advance token_nr Why isn't token_nr declared earlier?
-	v = t.value;
+	v = t.value; //[better to be renamed to value from v, because v is not descriptive. Also could have been declared here]
 	a = t.type;
 	if (a === "name") //makes sense to use === here
 	{
-		o = scope.find(v); //no idea what just happened. Set o to some object??
+		o = scope.find(v); //no idea what just happened. Set o to some object?? --[go find the valuethat is assigned to v in the current scope]
 	}
 	else if (a === "operator") //if token type is operator
 	{
@@ -123,7 +132,7 @@ var advance = function (id) //set the variable name advance to the value of a fu
 ///////////////////SCOPE////////////////////
 
 //Most languages have some notation for defining new symbols (such as variable names)
-//In a very simple language, when we encounter a new word, we might give it a definition and put it in the symbol table
+//In a very simple language, [where all variables are global] when we encounter a new word, we might give it a definition and put it in the symbol table
 //In a more sophisticated language, we would want to have scope
 //Scope gives the programmer control over the lifespan and visibility of a variable
 //So for instance, global means that a variable has visibility to everything
@@ -143,17 +152,18 @@ var scope;
 
 var itself = function() 
 {
-	return this; //what does this do?
+	return this; //what does this do? --[returns whatever object you call it on]
 };
 
 var original_scope = 
 {
-	define: function(n) //Defines a function without a name that takes n. 	
-	//I'm guessing n is a name token object
+	define: function(n) //Defines a function without a name that takes n. --[Apparently, everything in js is a lambda function]
+	//I'm guessing n is a "name" token object
+	//--[Takes the name token, sets its value within the scope]
 	{
 		var t = this.def[n.value];
 		//What does this refer to? I'm guessing:original_scope. 
-		//How can this.def be used here when it is not declared until later? line
+		//How can this.def be used here when it is not declared until later? --[original scope never gets run without a new_scope object, so it always has that new_scope object's def]
 		//So this is saying set the value of t to be object n
 		//why not just var t = n?
 		
@@ -161,23 +171,23 @@ var original_scope =
 		if (typeof t === "object") //if t is an object, 
 		{
 			n.error(t.reserved ?
-			//I really don't understand .error
-			//is .error a method available on any object?
-			//What does this ? do?
+			//What does this ? do? --[shorthand for if. if t.reserved is truthy, then print "Already reserved." else, print "Already defined."]
+			//--[statement that returns a boolean? run this true_condition :  run this false_condition]
 			//When did we define .reserved?
 				"Already reserved." :
 				"Already defined.");
 		} 
 		//Here's where we define all the default attributes of original_scope
-		//If it were me, I think I'd put this stuff before the if loop
+		//If it were me, I think I'd put this stuff before the if loop --[can't, errorchecking wouldn't work]
 		//That way, I'd have the default attributes, and the if could override if necessary 
 		this.def[n.value] = n;
-		n.reserved = false;
-		n.nud = itself;
+		n.reserved = false; //--[n.error line above wouldn't work]
+		n.nud = itself; //--[overrides the default nud method. Itself shortcut]
 		n.led = null;
 		n.lbp = 0;
 		n.scope = scope;
 		return n;
+		//--[This stuff ^ is put at the bottom so the errorchecking works]
 	},
 
 	//The find function is used to find the definition of a name
@@ -189,31 +199,35 @@ var original_scope =
 	//undefined would mean an undeclared name, which I'm taking to mean that it has never been assigned a value
 	//if it's a function, it would indicate a collision with an inherited method
 	//I'm taking that collision to mean one name means multiple things within the same scope
+	//--[find looks for the definition that you set in define and returns it]
 	find: function(n) 
 	{
-		var e = this, o; //Is this equivalent to: 
-								//var e = this
-								//var e = o
-		while (true) 
+		var e = this, o; //--[this is the current scope obj]
+				//--[var e = this]
+				//--[o is a new variable]	
+		while (true)
 		{
-			o = e.def[n]; //this seems convoluted. Set o to be the value of e.def[n]
+			o = e.def[n]; //this seems convoluted. Set o to be the value of e.def[n] --[set o = definion of n within e]
 			//okay based on the check below, it seems it's to save different bits to parts of o
 			
 			//if o exists, and type of o is not a function
-			if (o && typeof o !== "function")
+			if (o && (typeof o !== "function"))
 			{
-				return e.def[n];
+				return e.def[n]; //--[could be changed to o]
 			}
 			//set e to be e's parent
-			e = e.parent;
+			e = e.parent; //set e to be its parent scope, so it can keep looking upward
 			//if e (which is e.parent) does not exist...
 			if (!e) 
 			{
-				o = symbol_table[n]; //how does this configuration work? 
+				o = symbol_table[n]; 
+				//--??[a good example of a name that exists in the symbol_table but not in scope is a reserved word. think about this]
+				//how does this configuration work? 
 				//set o equal to symbol_table[n]
 				//if symbol_table[n] doesn't exist...does o become None?
-				return o && typeof o !=='function' ?
-						o : symbol_table["(name)"];
+				return (o && (typeof o !=='function')) ? (o) : (symbol_table["(name)"]);
+				//--[if o exists and o is not a function, return o, else return symbol_table["name"]] 
+				//--[checked in all the scopes and symbol_table, and it doesn't exist, making it a new variable name]
 			} 
 		}
 	},
@@ -226,6 +240,7 @@ var original_scope =
 	},
 
 	//The reserve method indicates that a name has been used as reserved word in the current scope
+	//--[Dominic and I stopped here!]
 	reserve: function(n)
 	{
 		if (n.arity !== "name" || n.reserved) //if neither n's type is "name" nor n.reserved is true, move on
@@ -234,9 +249,9 @@ var original_scope =
 			//what does this return? 
 			//I'm guessing it's one of those I need to return something in js so...here's a return things
 		}
-		var t = this.def[n.value]; //I really don't undersatnd this .def method
+		var t = this.def[n.value]; //
 	//This is the handle both conditions (if n's type is name or if n.reserved is true)
-		if (t) //if this.def[n.value] exists
+		if (t) //if this.def[n.value] exists --[if t has been defined]
 		{
 			if (t.reserved) //if t is reserved, which must be a boolean
 			{
@@ -247,9 +262,9 @@ var original_scope =
 			{
 				n.error("Already defined.");
 			}
-			this.def[n.value] = n;
-			n.reserved = true;
 		}
+		this.def[n.value] = n;
+		n.reserved = true;
 	};
 
 	//We need a policy for reserved words. 
@@ -265,11 +280,11 @@ var original_scope =
 	//(Also when would I ever want a variable named if?)
 	var new_scope = function() 
 	{
-		var s = scope;
-		scope = Object.create(original_scope); //here we create an instance of a scope object!
+		var s = scope; //--[save a pointer to the object that is global scope]
+		scope = Object.create(original_scope); //--[here we create an instance of a scope object, in the process updating the global scope object to be this scope object.]
 		scope.def = {};
-		scope.parent = s; //wait, how is scope its own parent????
-		return scope
+		scope.parent = s; //wait, how is scope its own parent???? --[set scope's parent to previous global scope that s points to]
+		return scope //return new local scope
 	};
 
 ///////////////////PRECEDENCE////////////////////
