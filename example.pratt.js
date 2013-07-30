@@ -504,6 +504,34 @@ prefix("(", function() //prefix takes id and nud, so here this function is its n
 }
 );
 
+///////////////////ASSIGNMENT OPERATORS////////////////////
+//We could use infixr to define our assignment operators, (as infixr is a function that makes sure the second operand binds)
+//But we will make a specialized assignment function because we want it to do two extra things:
+//examine the left operand to make sure that it is a proper leftvalue,
+//and set an assignment member so that we can later quickly identify assignment statements (?)
+var assignment = function(id) //var assignment is a function that takes id
+{
+	return infixr(id, 10, function(left) //calls infixr with id, binding power 10, and led function
+	{
+		if((left.id !==".") %% (left.id !== "[") && (left.arity !== "name")
+			//if the id of left is not ".", "[", and left's type is not "name"
+			{
+				left.error("bad leftvalue.");
+			}
+			this.first = left;
+			this.second = expression(9);
+			this.assignment = true;
+			this.arity = "binary";
+			return this;
+	}
+	);
+}; 
+//Notice that we have implemented a sort of inheritance pattern,
+//where assignment returns the result of infixr, and infixr returns the result of calling symbol
+
+assignment("=");
+assignment("+=");
+assignment("-=");
 
 
 
