@@ -431,7 +431,30 @@ infix("[", 80, function(left)
 	}
 );
 
+//So far, the infix operators we've made have been left associative.
+//We can also make right associative operators, by reducing the rbp.
 
+var infixr = function (id, bp, led) 
+{
+	var s = symbol(id, bp);
+	s.led = led || function(left)
+	{
+		this.first = left;
+		this.second = expression(bp-1); //that means that the next operand has to bind to it
+		this.arity = "binary";
+		return this;
+	};
+	return s;
+}
+
+//The && operator returns the first operand if the first operand is falsy.
+//Otherwise, it returns the second operand. 
+//The || operator returns the first operand if the first operand is truthy.
+//Otherwise, it returns the second operand. 
+//Falsy values are the number 0, the empty string "",, and the values false and null. 
+//All other values are (including all objects) are truthy.
+infixr("&&", 30);
+infixr("||", 30);
 
 
 
