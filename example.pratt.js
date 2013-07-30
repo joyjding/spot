@@ -471,6 +471,43 @@ var infixr = function (id, bp, led)
 infixr("&&", 30);
 infixr("||", 30);
 
+///////////////////PREFIX OPERATORS////////////////////
+//The code we used for right associative operators can be adapted for prefix operators.
+//Prefix operators are right associative. A prefix does not have a lbp because it doesn't not bind to the left.
+//Prefix operators can also sometimes be reserved words. 
+
+var prefix = function(id, nud) 
+{
+	var s = symbol(id); //call symbol on id
+	s.nud = nud || function() 
+	{
+		scope.reserve(this); //not really sure what this does
+		this.first = expression(70); //its first branch is the expression to the right
+		//it has no second branch, because it's unary
+		this.arity = "unary"
+		return this;
+	};
+	return s;
+}
+
+//creating prefix symbols "-", "!" and "typeof"
+prefix("-");
+prefix("!");
+prefix("typeof");
+
+//creating prefix symbol "("
+prefix("(", function() //prefix takes id and nud, so here this function is its nud method
+{
+	var e = expression(0);
+	advance(")"); //yeah, not really sure of the symbols that use advance with an arg
+	return e;
+}
+);
+
+
+
+
+
 
 
 
@@ -487,7 +524,7 @@ infixr("||", 30);
 //operand
 
 //right binding power(rbp)
-//left binding power (lbp)
+//left binding power (lbp): how strongly a token binds to the left
 //nud (null denotation)
 //led (left denotation)
 
