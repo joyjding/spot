@@ -355,6 +355,82 @@ symbol("*", 60).led = function(left)
 	return this;
 };
 
+//Now to generalize infix operator production
+//Here, we define an infix function that helps us make symbols for infix operators
+//The infix function takes id, binding power(bp), and an optional led function
+//If a led function is not provided, the infix function supplies a default led that is useful in most cases - how?
+var infix = function (id, bp, led) 
+{
+	var s = symbol(id, bp);
+	s.led = led || function(left) //led is either passed in argument, or generic led
+	{
+		//this exact code is used in the functions for + and *
+		this.first = left;
+		this.second = expression(bp);
+		this.arity = "binary";
+		return this;
+	};
+	return s;
+}
+
+//Basic math infix operators
+//infix("+", 50); //this and * is commented out because I like keeping the examples above
+infix ("-", 50); //Call infix, passing in these arguments, which creates a new symbol "-"
+//infix("*", 60);
+infix("/", 60);
+
+//comparison infix operators
+infix("===", 40);
+infix("!==", 40);
+infix("<", 40);
+infix("<=", 40);
+infix(">", 40);
+infix(">=", 40);
+
+//Ternary infix operator takes 3 expressions, separated by ? and :.
+//It needs its own led function, not the default
+
+infix("?", 20, function(left) 
+	{
+		this.first = left;
+		this.second = expression(0);
+		advance(":");
+		this.third = expression(0);
+		this.arity = "ternary";
+		return this;
+	}
+);
+
+//The . operator is used to select a member of an object. 
+//The token on the right must be a name, but it will be used as a literal
+
+infix(".", 80, function(left)
+	{
+		this.first = left;
+		if (token.arity != "name")
+		{
+			token.error("Expected a property name.");
+		}
+		token.arity = "literal"; //change the token's arity to literal
+		this.second = token; //set the token to be the second branch
+		this.arity = "binary" //GAH confused about what happened here
+		advance();
+		return this;
+	}
+);
+
+//The [ operator is used to dynamically select a member from an object or array.
+//The expression on the righ tmust be followed by a closing ].
+infix("[", 80, function(left)
+	{
+		this.first = left;
+		this.second = expression(0);
+		this.arity = "binary";
+		advance("]"); //I don't really understand the advance function here
+		return this;
+	}
+);
+
 
 
 
@@ -368,7 +444,7 @@ symbol("*", 60).led = function(left)
 //token
 //operator
 	//prefix operator
-	//infix operator
+	//infix operator: an operator that comes between its two operands
 	//suffix operator
 //operand
 
