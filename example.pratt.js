@@ -50,7 +50,7 @@ var symbol = function(id, bp)
 		symbol_table[id] = s; //create an entry in symbol table[id arg], set equal to s
 		//--[this could also be written as symbol_table.id = s]
 	}
-	return s; //return symbol object
+	return s; //return symbol object 
 };
 
 //Now to add some symbols to our symbol table:
@@ -87,6 +87,7 @@ var advance = function (id) //set the variable name advance to the value of a fu
 	//check that there is no id error
 	if (id && (token.id !== id)) //If both id and token.id do not equal id WEIRD --[Added helpful parentheses]
 	//--[if id is not undefined and if token.id is not equal to id]
+	//{if there was the id arg passed in, and the current token is not what we expected(arg id)}
 	{
 		token.error("Expected '" + id + "'."); //[.error might not exist. errrr Use "throw new Error("asdf")]
 	}
@@ -98,13 +99,13 @@ var advance = function (id) //set the variable name advance to the value of a fu
 		return; //ends the entire function --[function drops mic, peaces out]
 	}
 	//now we get to the good part.
-	t = tokens[token_nr]; //Set t = to the token at tokens[token_nr];
+	t = tokens[token_nr]; //Set t = to the token at tokens[token_nr]; {token_nr might be next right?}
 	token_nr +=1 //advance token_nr Why isn't token_nr declared earlier?
 	v = t.value; //[better to be renamed to value from v, because v is not descriptive. Also could have been declared here]
 	a = t.type;
 	if (a === "name") //makes sense to use === here
 	{
-		o = scope.find(v); //no idea what just happened. Set o to some object?? --[go find the valuethat is assigned to v in the current scope]
+		o = scope.find(v); //no idea what just happened. Set o to some object?? --[go find the value that is assigned to v in the current scope]
 	}
 	else if (a === "operator") //if token type is operator
 	{
@@ -161,11 +162,12 @@ var original_scope =
 	//I'm guessing n is a "name" token object
 	//--[Takes the name token, sets its value within the scope]
 	{
-		var t = this.def[n.value];
+		var t = this.def[n.value]; //{check in scope.def for n's id, if it returns null, we haven't seen it yet within this scope}
 		//What does this refer to? I'm guessing:original_scope. 
 		//How can this.def be used here when it is not declared until later? --[original scope never gets run without a new_scope object, so it always has that new_scope object's def]
 		//So this is saying set the value of t to be object n
-		//why not just var t = n?
+		//why not just var t = n? {checking: have already seen this value}
+		//{t is just to test for existence}
 		
 		//This if loop checks if name has already been used as a reserved word				
 		if (typeof t === "object") //if t is an object, 
@@ -180,7 +182,7 @@ var original_scope =
 		//Here's where we define all the default attributes of original_scope
 		//If it were me, I think I'd put this stuff before the if loop --[can't, errorchecking wouldn't work]
 		//That way, I'd have the default attributes, and the if could override if necessary 
-		this.def[n.value] = n;
+		this.def[n.value] = n; //{within this scope, within .def, set the key for n's id to point to the n object}
 		n.reserved = false; //--[n.error line above wouldn't work]
 		n.nud = itself; //--[overrides the default nud method. Itself shortcut]
 		n.led = null;
@@ -209,6 +211,7 @@ var original_scope =
 		{
 			o = e.def[n]; //this seems convoluted. Set o to be the value of e.def[n] --[set o = definion of n within e]
 			//okay based on the check below, it seems it's to save different bits to parts of o
+			//{n is the token's value here}
 			
 			//if o exists, and type of o is not a function
 			if (o && (typeof o !== "function"))
@@ -243,7 +246,7 @@ var original_scope =
 	//--[Dominic and I stopped here!]
 	reserve: function(n)
 	{
-		if (n.arity !== "name" || n.reserved) //if neither n's type is "name" nor n.reserved is true, move on
+		if ((n.arity !== "name") || n.reserved) //if neither n's type is "name" nor n.reserved is true, move on
 		{
 			return; 
 			//what does this return? 
@@ -286,6 +289,7 @@ var original_scope =
 		scope.parent = s; //wait, how is scope its own parent???? --[set scope's parent to previous global scope that s points to]
 		return scope //return new local scope
 	};
+	//{Nick and I stopped here}
 
 ///////////////////PRECEDENCE////////////////////
 
@@ -561,7 +565,177 @@ constant("null", null);
 
 symbol("(literal)").nud = itself;
 
+///////////////////STATEMENTS////////////////////
+//Pratt's original formulation worked with functional languages in which everything is an expression
+//Most languages have statements that are not nestable as expressions
+//We can handle statement by adding another method to tokens, the std (statement denotation)
+//A std is like a nud, except that it is only used at the beginning of a statement
+//(to indicate a statement has started?)
 
+var statement = function()
+{
+	var n = token; //broken up from var n = token, v;
+	var v;
+	if (n.std) {
+		advance(); //change to the next token
+		scope.reserve(n);
+		return n.std();
+	}
+	v = expression(0)
+	if (!v.assignment && v.id !=="(") 
+	//if v does not have an assignment and v is not a "("
+	{	
+		v.error("Bad expression statement."); //what counts as statement?
+	}
+	advance(";");
+	return v;
+};
+
+//The statements function parses statements until it sees (end) or }, 
+//which signals the end of a block
+//The function returns a statement, an array of statements, or null if there were no statements present
+
+var statements = function()
+{
+	var a = [];
+	var s;
+
+	while (true)
+	{
+		if (token.id==="}") || token.id === "(end)"
+		{
+			break;
+		}
+
+		s = statement();
+		if (s) //if there was a statement/array of statements returned from statement() 
+		{
+			a.push(s); //add s to empty list a
+		}
+	}
+	return ((a.length === 0) ? (null) : ((a.length === 1) ? (a[0]) : (a)); 
+};
+
+//the stmt function is used to add statement symbols to the symbol table. 
+//It takes a statement id and an std function
+
+var stmt = function(s, f) //statement is a function that takes statement id and std function
+{
+	var x = symbol(s); //x = call symbol on s, which is an id
+	x.std = f; //the statement function of x is f
+	return x; //symbol object that has a statement function
+}; 
+
+//The block statement wraps a pair of curly braces around a list of statements, giving them a new scope
+//This is not in js, this is in simplified js
+
+stmt("{", function()
+{
+	new_scope();
+	var a = statements();
+	advance("}");
+	scope.pop();
+	return a;
+}
+);
+
+//The block function parses a block
+
+var block = function() 
+{
+	var t = token;
+	advance("{");
+	return t.std();
+};
+
+//The var statement defines one or more variables in the current block.
+//Each name can be optionally followed by = and an initializing expression.
+
+stmt("var," function()) //statement constructor
+{
+	var a = [];
+	var n;
+	var t;
+
+	while (true)
+	{
+		n = token;
+		if (n.arity !== "name")
+		{
+			n.error("Expected a new variable name.");
+		}
+		scope.define(n);
+		advance();
+		if (token.id === "=") //if the next token now housed in token is an equals sign
+		{
+			t = token;
+			advance("=");
+			t.first = n;
+			t.second = expression(0);
+			t.arity = "binary";
+			a.push(t);
+		}
+		if (token.id !== ",") //shouldn't the next one be a variable value???
+		{
+			break;
+		}
+		advance(",");
+	}
+	advance(";");
+	return a.length === 0 ? null: a.length ===1 ? a[0]:a
+}
+
+//The while statement defines a loop. It contains an expression in parens and a block.
+stmt("while", function() 
+{
+	advance("("); //try to understand the advance function when passing in an arg
+	this.first = expression(0);
+	advance(")");
+	this.second = block();
+	this.arity = "statement";
+	return this
+}
+);
+
+//The if statement allows for conditional execution. 
+//If we see the else symbol after the block, then we parse the next block or if statement.
+stmt("if, function()"
+{
+	advance("("); //probably does something like is the current token a "(" ? if not, throw an error
+		this.first = expression(0);//why 0?
+		advance(")");
+		this.second = block();
+		if (token.id === "else")
+		{
+			scope.reserve(token); //pass token object into scope
+			advance("else");
+			this.third = token.id === "if" ? statement() : block();
+		}
+		else
+		{
+			this.third = null;
+		}
+		this.arity = "statement";
+		return this;
+}
+);
+
+//the break statement is used to break out of loops
+stmt("break", function()
+{
+	if (token.id !== ";")
+	{
+		this.first = expression(0);
+	}
+	advance(";");
+	if (token.id !== "}")
+	{
+		token.error("Unreachable statement.");
+	}
+	this.arity = "statement";
+	return this;
+}
+);
 
 
 
@@ -582,6 +756,11 @@ symbol("(literal)").nud = itself;
 //nud (null denotation)
 //led (left denotation)
 
+//statement: Statements do something and are often composed of expressions
+//expression: evaluates to a value
+
+//Qs:
+//What is the difference between an expression and a statement? In Python? In JS?
 
 
 
