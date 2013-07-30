@@ -533,7 +533,33 @@ assignment("=");
 assignment("+=");
 assignment("-=");
 
+///////////////////CONSTANTS////////////////////
+//The constant function builds constants into the langue. 
+//The nud method mutates a name token into a literal token. 
 
+var constant = function(s, v) //constant is a function that takes s and v
+//I would have just changed s to id, or can I not do that?
+{
+	var x = symbol(s); //call symbol, passing in id = s
+	x.nud = function()
+	{
+		scope.reserve(this); //I guess scope only came in after we started creating variables
+		this.value = symbol_table[this.id].value;
+		this.arity = "literal";
+		return this;
+	};
+	x.value = v;
+	return x;	
+};
+
+constant ("true", true);
+constant("false", false);
+constant("null", null);
+
+//The "(literal)" symbol is the prototype for all string and number literals.
+//The nud method of the literal token returns the token itself. 
+
+symbol("(literal)").nud = itself;
 
 
 
