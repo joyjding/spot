@@ -302,6 +302,33 @@ var original_scope =
 	//70 --- unary operators like !
 	//80 --- . [ (
 
+///////////////////EXPRESSIONS////////////////////
+
+//Here's where we get into the heart of Pratt's technique, the expression function.
+//The expression function takes a right binding power as an argument that controls how aggressively the current token binds to tokens on its right.
+
+//Expression calls the nud method of the token
+//The nud is used to process literals, variables, and prefix operators
+//As long as the right binding power is less than the left binding power of the next token, the led method is invoked on the following token
+//The led is used to process infix and suffix operators
+//This process can be recursive b/c the nud and led methods can call expression
+//Okay, seems like we haven't defined these yet
+var expression = function(rbp) //function expression takes rbp as its argument
+{
+	var left; //declare variable left -- seems redundant, why not just say var left = t.nud(); later?
+	var t = token; //t = current token
+	advance(); //In this implementation, advance actually saves the next token to token
+	left = t.nud(); //I don't see this .nud as returning anything except in original_scope
+					//Where di we set .nud?
+	while (rbp<token.lbp) //while rbp is less than the lbp of the next token, keep going
+	{
+		t = token; //token (on the first pass, it's the next token)
+		advance();//assign token to be the even next token
+		left = t.led(left); //set left = t.led(left)
+	}
+	return left;
+}	
+
 
 
 
