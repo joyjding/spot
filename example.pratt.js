@@ -329,7 +329,53 @@ var expression = function(rbp) //function expression takes rbp as its argument
 	return left;
 }	
 
+///////////////////INFIX OPERATORS////////////////////
 
+//The + operator is an infix operator, so it has a led method that weaves the token object into a tree whose two branches (first and second) are, respectively, the operand to the left and right of the +
+//The left operand is passed into the led, which then obtains the right operand by calling the expression function
+symbol("+", 50).led = function(left) //???Is this doing a couple of simultaneous things?
+//create an instance of the symbol class, with id "+" and bp = 50
+//simultaneously, define its led method 
+{
+	this.first = left; //set this.first to the passed in left argument
+	this.second = expression(50); //set this.second to call expression(50)
+								  //this allows us to determine where the right ends
+	this.arity = "binary"; //+'s type is binary
+	return this; //the led method of + returns the tree, with arity
+}
+
+//The symbol for * is the same as + except for the id and binding power.
+//It has a higher binding power because it binds more tightly.
+//(Basically, it takes a lot for the next element not to bind to *.)
+symbol("*", 60).led = function(left) 
+{
+	this.first = left;
+	this.second = expression(60);
+	this.arity = "binary";
+	return this;
+};
+
+
+
+
+
+
+
+
+
+//Important vocab:
+
+//token
+//operator
+	//prefix operator
+	//infix operator
+	//suffix operator
+//operand
+
+//right binding power(rbp)
+//left binding power (lbp)
+//nud (null denotation)
+//led (left denotation)
 
 
 
