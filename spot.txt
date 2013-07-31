@@ -1,12 +1,27 @@
 # Demo Program
 
-		Screensay: "She said, 'Hello World!'" (Hello!)
-	(What a nifty language!)
-		Screensay: "I have [4/2] learn it!"
-		This is new variable cars. Set cars' value to 100.
-		Change car's value to "dog".  
+	Screensay: "She said, 'Hello World!'" (Hello!)
+(What a nifty language!)
+	Screensay: "I have [4/2] learn it!"
+	This is new variable cars. Set cars' value to 100.
+	Change car's value to "dog".  
 
+	Define a new function, addnum. Addnum takes in 2 
+arguments. 
+Addnum's instructions: 
+Screensay: "hello world"
 
+	Define a new function, number of apples. Number of 
+apples requires 0 arguments. 
+
+Instructions:
+Create new variable, initial number of apples. Set initial number of apples' value to 50. 
+
+Create new variable, apples Fred ate. Set apples Fred ate's value to 20. 
+
+Create new variable, final number of apples. Set final number of apples to [initial number of apples - apples Fred ate].
+
+Return final number of apples. 
 
 
 
@@ -101,7 +116,124 @@ value to 2000.
 
 	Screensay: "Let's talk about [text]." [text]
 	Screensay: "She's [integer] inches tall." [integer]
-	
+
+## (ex6) Putting multiple variables in strings-->
+
+This is apples, a new variable. Set apples' value to 8.
+This is pears, a new variable. Set pears' value to 10. 
+Screensay: "Let's talk about apples and pears. I have [integer] apples, and [integer] pears." [apples, pears ]
+
+## (ex7) SKIPPED Concatenating strings
+Not really necessary. Will come back if so inclined. 
+## (ex8) SKIPPED
+## (ex9) SKIPPED 
+## (ex10) SKIPPED escape characters
+I don't really want weird symbols...
+
+## (ex11) raw_input
+-->
+Create new variable: name. 
+Ask the user for name's value with the screensay: "What is your name?" Then, set name's value to user response.
+
+1) Ask the user for name's value.
+2) Use user input to set name's value. 
+3) Name's value waits on user input. 
+4) Set name's value based on user input. 
+5) Ask the user for name's value; screensay: "What is your name?"
+6) Screensay: "What is your name?", then set name's value as the user's keyboard input.
+7) Screensay: "What is your name", then set name's value to be a user response. 
+8) Screensay: "What is your name?" Then, set name's value to user response. 
+
+
+## (ex12) SKIPPED more raw_input
+## (ex13) SKIPPED script that takes in arguments
+nope
+## (ex14) SKIPPED argv and raw_input
+## (ex15) SKIPPED opening files and reading them
+## (ex16) SKIPPED closing, reading, truncating, writing to files
+## (ex17) SKIPPED more files
+
+## (ex18) Functions!!!!!!
+Notes: functions name pieces of code.
+Functions take arguments. 
+Functions are basically mini-scripts!
+
+Functions have a couple of parts:
+a) thing marking function beginning
+b) thing marking function end
+c) place to put arguments
+
+Notes2: Are functions like poems? 
+
+Some examples:
+
+	Define a new function, addnum, that takes in 2 arguments,
+number1 and number2. Instructions: return number1 + number2. 
+	Define a new function, addnum. Addnum takes in 2 
+arguments. 
+Addnum's instructions: 
+Screensay: "hello world"
+
+	Define a function that takes in 0 arguments. 
+Instructions: 
+Screensay: "hello world"
+	Define a new function, number of apples. Number of 
+apples requires 0 arguments. 
+
+Instructions:
+Create new variable, initial number of apples. Set initial number of apples' value to 50. 
+
+Create new variable, apples Fred ate. Set apples Fred ate's value to 20. 
+
+Create new variable, final number of apples. Set final number of apples to [initial number of apples - apples Fred ate].
+
+Return final number of apples. 
+
+#this is still pretty weird, but let's adjust it when more things start being necessary, as opposed to trying to anticipate all of it right now.      
+
+## Needed: Basic math
+
+Add
+Subtract
+Multiply
+Divide
+
+Add 1 and 2. 
+Subtract 2 from 1. 
+Multiply 5 and 6.
+Divide 6 by 5. 
+
+Add 1 and 2, then multiply them by 6. 
+(1+2) * 6
+
+# I could choose to just have numbers, because it would allow me to have a Pratt parser. So, let's just say that basic math works the same way. 
+
+Create new variable x. X's value is 5+6. 
+
+## (ex19) SKIPPED
+## (ex20) SKIPPED functions and files
+## (ex21) SKIPPED returning things from functions
+## (ex22) SKIPPED review
+## (ex23) SKIPPED read some code
+## (ex24) SKIPPED more function practice
+## (ex25) SKIPPED even more function practice 
+## (ex26) SKIPPED take a test!
+
+## (ex27) SKIPPED memorizing logic
+## (ex28) SKIPPED boolean practice
+## (ex29) SKIPPED what if
+## (ex30) SKIPPED else and if
+## (ex31) SKIPPED making decisions
+## (ex32) SKIPPED loops and lists
+## (ex33) SKIPPED while loops
+
+## (ex34) SKIPPED accessing elements of lists
+## (ex35) SKIPPED branches and functions
+## (ex36) SKIPPED designing and debugging
+
+
+
+
 
 
 
@@ -114,7 +246,8 @@ value to 2000.
 Capitalization
 
 
-
+#Cool options
+Inbuilt methods (.capitalize, etc.)
 
 
 

@@ -41,3 +41,15 @@ my_teeth = "toothsome"
 
 print "Let's talk about %s." % my_name
 print "She's %d inches tall." % my_height
+
+
+## Ex 11
+print "How old are you?", 
+age = raw_input()
+
+print "How tall are you?", height = raw_input()
+
+print "How much do you weight?",
+weight = raw_input()
+
+print "So you're %r old, %r tall, and %r heavy." %(age, height,weight)
