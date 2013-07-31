@@ -10,6 +10,8 @@ token_names = [
 	'INT',
 	'ADD_OP',
 	'SUB_OP',
+	'MUL_OP',
+	'DIV_OP',
 ]
 
 tokens = token_names
@@ -18,6 +20,8 @@ tokens = token_names
 t_INT = r'[0-9][0-9]*'
 t_ADD_OP = r'\+'
 t_SUB_OP = r'-'
+t_MUL_OP = r'\*'
+t_DIV_OP = r'/'
 
 # Defines a rule for tracking line numbers
 def t_newline(t):
@@ -33,7 +37,7 @@ def t_error(t):
 spotlexer = lex.lex()
 
 # Test data for lexer
-data = "1-1"
+data = "1-1*2 3/"
 spotlexer.input(data)
 
 #Lexer returns LexToken , with attributes: tok.type, tok.value, tok.lineno, tok.lexpos
