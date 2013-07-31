@@ -46,9 +46,11 @@ lex_tokens = []
 while True:
 	tok = lex.token()
 	if not tok: break
-	tok = tok.type, tok.value
-	lex_tokens.append(tok)
-
+	tdict = {
+			"ID": tok.type, 
+			"VALUE": tok.value
+			}
+	lex_tokens.append(tdict)
 print lex_tokens
 #-----------------------------
 # PARSER
