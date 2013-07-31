@@ -1,5 +1,6 @@
+# TOKENIZER AND PARSER FOR SPOT LANGUAGE
 #-----------------------------
-# Tokenizer and Parser for spot language
+# TOKENIZER
 # Tokenizer Uses Ply library
 #-----------------------------
 
@@ -41,7 +42,32 @@ data = "1-1*2 3/"
 spotlexer.input(data)
 
 #Lexer returns LexToken , with attributes: tok.type, tok.value, tok.lineno, tok.lexpos
+lex_tokens = []
 while True:
 	tok = lex.token()
 	if not tok: break
-	print tok
+	tok = tok.type, tok.value
+	lex_tokens.append(tok)
+
+print lex_tokens
+#-----------------------------
+# PARSER
+# Top Down Precedence Parsing
+#-----------------------------
+
+# Declare global token variable that contains the current token
+global token
+
+
+
+
+
+
+
+
+
+
+
+
+
+
