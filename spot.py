@@ -4,55 +4,55 @@
 # Tokenizer Uses Ply library
 #############################################################
 
-# import ply.lex as lex #import ply library
+import ply.lex as lex #import ply library
 
-# # List of token names
-# token_names = [
-# 	'INT',
-# 	'ADD_OP',
-# 	'SUB_OP',
-# 	'MUL_OP',
-# 	'DIV_OP',
-# ]
+# List of token names
+token_names = [
+	'INT',
+	'ADD_OP',
+	'SUB_OP',
+	'MUL_OP',
+	'DIV_OP',
+]
 
-# tokens = token_names
+tokens = token_names
 
-# #-Token Functions----------------------------- 
-# t_INT = r'[0-9][0-9]*'
-# t_ADD_OP = r'\+'
-# t_SUB_OP = r'-'
-# t_MUL_OP = r'\*'
-# t_DIV_OP = r'/'
+#-Token Functions----------------------------- 
+t_INT = r'[0-9][0-9]*'
+t_ADD_OP = r'\+'
+t_SUB_OP = r'-'
+t_MUL_OP = r'\*'
+t_DIV_OP = r'/'
 
-# # Defines a rule for tracking line numbers
-# def t_newline(t):
-# 	r'\n+'
-# 	t.lexer.lineno += len(t.value)
-# # A string containing ignored chars (spaces and tabs)
-# t_ignore = ' \t'
+# Defines a rule for tracking line numbers
+def t_newline(t):
+	r'\n+'
+	t.lexer.lineno += len(t.value)
+# A string containing ignored chars (spaces and tabs)
+t_ignore = ' \t'
 
-# def t_error(t):
-# 	print "Illegal character '%s' " % t.value[0]
+def t_error(t):
+	print "Illegal character '%s' " % t.value[0]
 
-# # Build the lexer
-# spotlexer = lex.lex()
+# Build the lexer
+spotlexer = lex.lex()
 
-# # Test data for lexer
-# data = "1-1*2 3/"
-# spotlexer.input(data)
+# Test data for lexer
+data = "1+1"
+spotlexer.input(data)
 
-# #Lexer returns LexToken , with attributes: tok.type, tok.value, tok.lineno, tok.lexpos
-# lex_tokens = []
-# while True:
-# 	tok = lex.token()
-# 	if not tok: break
-# 	tdict = {
-# 			"id": tok.type, 
-# 			"value" : tok.value,
-# 			"token_num" : tok.lexpos
-# 			}
-# 	lex_tokens.append(tdict)
-# print lex_tokens
+#Lexer returns LexToken , with attributes: tok.type, tok.value, tok.lineno, tok.lexpos
+lex_tokens = []
+while True:
+	tok = lex.token()
+	if not tok: break
+	tdict = {
+			'id': tok.type, 
+			'value' : tok.value,
+			'token_num' : tok.lexpos
+			}
+	lex_tokens.append(tdict)
+print lex_tokens
 ###############################################################################
 # PARSER
 # Top Down Precedence Parsing
@@ -165,18 +165,14 @@ class OperatorAddToken:
 class EndToken:
     lbp = 0
 
-import re
-
-token_pat = re.compile("\s*(?:(\d+)|(.))")
-
 def tokenize(program):
-    for number, operator in token_pat.findall(program):
-        if number:
-            yield LiteralToken(number)
-        elif operator == "+":
-            yield OperatorAddToken()
-        else:
-            raise SyntaxError("unknown operator")
+    for lex_token in lex_tokens:
+    	if lex_token['id']=='INT':
+    		yield LiteralToken(lex_token['value'])
+    	elif lex_token['id']=='ADD_OP':
+    		yield OperatorAddToken()
+    	else: 
+    		raise SyntaxError("unknown operator")
     yield EndToken()
 
 def parse(program):
