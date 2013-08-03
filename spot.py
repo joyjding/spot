@@ -154,38 +154,65 @@ def expression(rbp=0):
 
 class LiteralToken:
     def __init__(self, value):
-        self.value = int(value)
+        self.value = value
     def nud(self):
-        return self.value
+    	return self
+    def __repr__(self):
+    	return "(literal %s)" % self.value
 
 class OperatorAddToken:
     lbp = 10
     def nud(self):
-    	return expression(100)
+    	self.first = expression(100)
+    	self.second = None
+    	return self
     def led(self, left):
-        return left + expression(10)
+        self.first = left
+        self.second = expression(10)
+        return self
+    def __repr__(self):
+    	return "(add %s %s)" % (self.first, self.second)
 
 class OperatorSubToken:
 	lbp = 10
 	def nud(self):
-		return -expression(100)
+		self.first = expression(100) #should this be -?
+		self.second = None
+		return self
 	def led(self, left):
-		return left - expression(10)
+		self.first = left
+		self.second = expression(10) #should this be -?
+		return self
+	def __repr__(self):
+		return "(sub %s %s)" % (self.first, self.second)
 
 class OperatorMulToken:
 	lbp = 20
 	def led(self, left):
-		return left * expression(20)
+		self.first = left
+		self.second = expression(20)
+		return self
+	def __repr__(self):
+		return "(mul %s %s)" % (self.first, self.second)
 
 class OperatorDivToken:
 	lbp = 20
 	def led(self, left):
-		return left / expression(20)
+		self.first = left
+		self.second = expression(20)
+		return self
+	def __repr__(self):
+		return "(div %s %s)" % (self.first, self.second)
 
 class OperatorPowToken:
 	lbp = 30
 	def led(self, left):
-		return left ** expression(30-1)
+		self.first = left
+		self.second = expression(30-1)
+		return self
+	def __repr__(self):
+		return "(pow %s %s)" % (self.first, self.second)
+
 class EndToken:
     lbp = 0
 
