@@ -13,6 +13,7 @@ token_names = [
 	'SUB_OP',
 	'MUL_OP',
 	'DIV_OP',
+	'POW_OP'
 ]
 
 tokens = token_names
@@ -23,6 +24,7 @@ t_ADD_OP = r'\+'
 t_SUB_OP = r'-'
 t_MUL_OP = r'\*'
 t_DIV_OP = r'/'
+t_POW_OP = r'\*\*'
 
 # Defines a rule for tracking line numbers
 def t_newline(t):
@@ -158,12 +160,15 @@ class LiteralToken:
 
 class OperatorAddToken:
     lbp = 10
+    def nud(self):
+    	return expression(100)
     def led(self, left):
-        right = expression(10)
-        return left + right
+        return left + expression(10)
 
 class OperatorSubToken:
 	lbp = 10
+	def nud(self):
+		return -expression(100)
 	def led(self, left):
 		return left - expression(10)
 
@@ -177,6 +182,10 @@ class OperatorDivToken:
 	def led(self, left):
 		return left / expression(20)
 
+class OperatorPowToken:
+	lbp = 30
+	def led(self, left):
+		return left ** expression(30-1)
 class EndToken:
     lbp = 0
 
@@ -192,6 +201,8 @@ def tokenize(program):
     		yield OperatorMulToken()
     	elif lex_token['id']=='DIV_OP':
     		yield OperatorDivToken()
+    	elif lex_token['id']=='POW_OP':
+    		yield OperatorPowToken()
     	else: 
     		raise SyntaxError("unknown operator")
     yield EndToken()
