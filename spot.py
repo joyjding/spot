@@ -38,7 +38,7 @@ def t_error(t):
 spotlexer = lex.lex()
 
 # Test data for lexer
-data = "1+1"
+data = raw_input(">What would you like to parse? ")
 spotlexer.input(data)
 
 #Lexer returns LexToken , with attributes: tok.type, tok.value, tok.lineno, tok.lexpos
@@ -162,6 +162,21 @@ class OperatorAddToken:
         right = expression(10)
         return left + right
 
+class OperatorSubToken:
+	lbp = 10
+	def led(self, left):
+		return left - expression(10)
+
+class OperatorMulToken:
+	lbp = 20
+	def led(self, left):
+		return left * expression(20)
+
+class OperatorDivToken:
+	lbp = 20
+	def led(self, left):
+		return left / expression(20)
+
 class EndToken:
     lbp = 0
 
@@ -171,6 +186,12 @@ def tokenize(program):
     		yield LiteralToken(lex_token['value'])
     	elif lex_token['id']=='ADD_OP':
     		yield OperatorAddToken()
+    	elif lex_token['id']=='SUB_OP':
+    		yield OperatorSubToken()
+    	elif lex_token['id']=='MUL_OP':
+    		yield OperatorMulToken()
+    	elif lex_token['id']=='DIV_OP':
+    		yield OperatorDivToken()
     	else: 
     		raise SyntaxError("unknown operator")
     yield EndToken()
