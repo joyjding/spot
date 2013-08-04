@@ -67,71 +67,6 @@ def expression(rbp=0):
         left = t.led(left)
     return left
 
-class LiteralToken:
-    def __init__(self, value):
-        self.value = value
-    def nud(self):
-    	return self
-    def __repr__(self):
-    	return "(literal %s)" % self.value
-
-class OperatorAddToken:
-    lbp = 10
-    def nud(self):
-    	self.first = expression(100)
-    	self.second = None
-    	return self
-    def led(self, left):
-        self.first = left
-        self.second = expression(10)
-        return self
-    def __repr__(self):
-    	return "(add %s %s)" % (self.first, self.second)
-
-class OperatorSubToken:
-	lbp = 10
-	def nud(self):
-		self.first = expression(100) #should this be -?
-		self.second = None
-		return self
-	def led(self, left):
-		self.first = left
-		self.second = expression(10) #should this be -?
-		return self
-	def __repr__(self):
-		return "(sub %s %s)" % (self.first, self.second)
-
-class OperatorMulToken:
-	lbp = 20
-	def led(self, left):
-		self.first = left
-		self.second = expression(20)
-		return self
-	def __repr__(self):
-		return "(mul %s %s)" % (self.first, self.second)
-
-class OperatorDivToken:
-	lbp = 20
-	def led(self, left):
-		self.first = left
-		self.second = expression(20)
-		return self
-	def __repr__(self):
-		return "(div %s %s)" % (self.first, self.second)
-
-class OperatorPowToken:
-	lbp = 30
-	def led(self, left):
-		self.first = left
-		self.second = expression(30-1)
-		return self
-	def __repr__(self):
-		return "(pow %s %s)" % (self.first, self.second)
-
-class EndToken:
-    lbp = 0
-
-
 class SymbolBase:
 	id = None
 	value = None
@@ -167,10 +102,32 @@ def symbol(id, bp=0):
 	return s
 
 symbol("(literal)")
-symbol("+", 10); symbol("-", 10)
-symbol("*", 20); symbol("/", 20)
 symbol("(end)") 
 
+def infix(id, bp):
+	def led(self,left):
+		self.first = left
+		self.second = expression(bp)
+		return self
+	symbol(id, bp).led = led
+
+def prefix(id, bp):
+	def nud(self):
+		self.first = expression(bp)
+		self.second = None
+		return self
+	symbol(id).nud = nud
+
+
+infix("+", 10)
+infix("-", 10)
+infix("*", 20)
+infix("/", 20)
+
+prefix("+", 100)
+prefix("-", 100)
+
+symbol("(literal)").nud = lambda self: self
 
 def tokenize(program):
     for lex_token in lex_tokens:
@@ -180,7 +137,7 @@ def tokenize(program):
     		new_symbol.value = lex_token['value']
     		yield new_symbol
     	elif lex_token['id'] == 'OPERATOR':
-    		symbol_class = symbol_dict.get(lex_token['id'])
+    		symbol_class = symbol_dict.get(lex_token['value'])
     		if not symbol_class:
     			raise SyntaxError("Unknown operator")
     		yield symbol_class() #make a new instance of the operator prototype class. No need to set a value b/c operators don't have values.
