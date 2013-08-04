@@ -1,10 +1,13 @@
 # TOKENIZER AND PARSER FOR SPOT LANGUAGE
+
+import ply.lex as lex #import ply library
+from symbol import *
+
 #############################################################
 # TOKENIZER
 # Tokenizer Uses Ply library
 #############################################################
 
-import ply.lex as lex #import ply library
 
 # List of token names
 token_names = [
@@ -51,10 +54,10 @@ while True:
 			}
 	lex_tokens.append(tdict)
 print lex_tokens
-###############################################################################
+#####################################################################################################
 # PARSER
 # Top Down Precedence Parsing
-################################################################################
+###################################################################################################
 
 def expression(rbp=0):
     global token
@@ -67,66 +70,14 @@ def expression(rbp=0):
         left = t.led(left)
     return left
 
-class SymbolBase:
-	id = None
-	value = None
-	first = None
-	second = None
-	third = None
-
-	def nud(self):
-		raise SyntaxError("no nud")
-	def led(self, left):
-		raise SyntaxError("no led")
-	def __repr__(self):
-		if self.id == "(name)" or self.id == "(literal)":
-			return "(%s %s)" % (self.id[1:-1], self.value) #cuts parens off self.id
-		out = [self.id, self.first, self.second, self.third]
-		out = map(str, filter(None, out))
-		return "(" + " ".join(out) + ")"
-
-symbol_dict = {}
-
-def symbol(id, bp=0):
-	try: 
-		s = symbol_dict[id]
-	except KeyError:
-		class s(SymbolBase):
-			pass
-		s.__name__ = "symbol:" + id #for debugging
-		s.id = id
-		s.lbp = bp
-		symbol_dict[id] = s
-	else: 
-		s.lbp = max(bp, s.lbp)
-	return s
-
 symbol("(literal)")
 symbol("(end)") 
-
-def infix(id, bp):
-	def led(self,left):
-		self.first = left
-		self.second = expression(bp)
-		return self
-	symbol(id, bp).led = led
-
-def prefix(id, bp):
-	def nud(self):
-		self.first = expression(bp)
-		self.second = None
-		return self
-	symbol(id).nud = nud
-
-
 infix("+", 10)
 infix("-", 10)
 infix("*", 20)
 infix("/", 20)
-
 prefix("+", 100)
 prefix("-", 100)
-
 symbol("(literal)").nud = lambda self: self
 
 def tokenize(program):
