@@ -1,3 +1,15 @@
+import global_config
+
+def expression(rbp=0):
+    t = global_config.token
+    global_config.token = global_config.next()
+    left = t.nud()
+    while rbp < global_config.token.lbp:
+        t = global_config.token
+        global_config.token = global_config.next()
+        left = t.led(left)
+    return left
+
 symbol_dict = {}
 
 class SymbolBase:

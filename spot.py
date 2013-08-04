@@ -2,6 +2,7 @@
 
 import ply.lex as lex #import ply library
 from symbol import *
+import global_config
 
 #############################################################
 # TOKENIZER
@@ -59,17 +60,6 @@ print lex_tokens
 # Top Down Precedence Parsing
 ###################################################################################################
 
-def expression(rbp=0):
-    global token
-    t = token
-    token = next()
-    left = t.nud()
-    while rbp < token.lbp:
-        t = token
-        token = next()
-        left = t.led(left)
-    return left
-
 symbol("(literal)")
 symbol("(end)") 
 infix("+", 10)
@@ -93,15 +83,37 @@ def tokenize(program):
     			raise SyntaxError("Unknown operator")
     		yield symbol_class() #make a new instance of the operator prototype class. No need to set a value b/c operators don't have values.
     	elif lex_token['id'] == 'NAME':
-    		pass
+    		scope.find(lex_token['value'])
+		
     new_symbol = symbol_dict["(end)"]
     yield new_symbol()
 
 def parse(program):
-    global token, next
-    next = tokenize(program).next
-    token = next()
+    global_config.next = tokenize(program).next
+    global_config.token = global_config.next()
     return expression()
+
+class Scope:
+	scope_names = {}
+	
+	def define(self, name):
+		exists = scope_names.get(name.value)
+		if not exists:
+			scope_names[name.value] = name
+		name.nud = lambda self: self
+		name.led = None
+		name.lbp = 0
+		#return name - doesn't seem necc right now
+	def find(self, name):
+		defined = scope_names.get(name)
+		if not defined:
+			raise SyntaxError("name not defined")
+		return defined
+
+global_config.scope = Scope()
+
+
+
 
 
 
