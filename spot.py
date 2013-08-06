@@ -83,20 +83,34 @@ while True:
 class Token:
 	def __init__(self, value=0):
 		self.value = value
+	def nulld(self):
+		return self
+	def leftd(self):
+		pass
 	def __repr__(self):
 		return "(%s, %r)" %(self.__class__.__name__, self.value)
 
-class AddOpTok(Token):
+class BinaryOpToken(Token):
+	def __init__(self, value=0):
+		Token.__init__(self)
+		self.first = None
+		self.second = None
+
+class AddOpTok(BinaryOpToken):
 	lbp = 20
-	
 	def nulld(self):
 		return expression(100)
 	def leftd(self, left):
 		self.first = left
 		self.second = expression(20)
 		return self
+	def __repr__(self):
+		#weird bug that has to do with representation...even though the result seems fine
 
-class SubOpTok(Token):
+		return "(%s, %r): self.first = %s, self.second = %s" %(self.__class__.__name__, self.value, self.first, self.second)
+		#return "(%s, %r)" %(self.__class__.__name__, self.value) 
+
+class SubOpTok(BinaryOpToken):
 	lbp = 20
 
 	def nulld(self):
@@ -106,7 +120,7 @@ class SubOpTok(Token):
 		self.second = expression(20)
 		return self
 
-class MulOpTok(Token):
+class MulOpTok(BinaryOpToken):
 	lbp = 30
 
 	def leftd(self, left):
@@ -153,26 +167,26 @@ def statement():
 
 def expression(rbp=0):
     t = global_config.token
-    global_config.token = global_config.next()
+    advance()
     left = t.nulld()
     while rbp < global_config.token.lbp:
         t = global_config.token
-        global_config.token = global_config.next()
-        left = t.leftd(left)
+        advance()
+        left = t.leftd(left) 
     return left
 
 def advance(id=None):
 	if (id and global_config.token.id!=id):
-		raise SyntaxError("Expected" + id + "but got " + global_config.token.id)
-	print "This is the %d-long list of class tokens advance got" %len(class_tokens), class_tokens 
+		raise SyntaxError("Expected" + id + "but got " + global_config.token.id) 
 	global_config.token = class_tokens.pop(0)
-	print "After the pop, this is now a %d-long list of class tokens" %len(class_tokens), class_tokens
-	print "Now this is the global token", global_config.token
-def parse(program):
-    global_config.next = tokenize(program).next
-    global_config.token = global_config.next()
-    return expression()	
+	
+	print "\n"
+def parse():
+    advance() #put something into global token
+    print "parsing done"
+    return expression()
 
+    
 # Process:
 # 5+5
 # [(num, 5), (add, +), (num, 5)]
