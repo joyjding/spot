@@ -37,24 +37,28 @@ def t_error(t):
 	print "Illegal character '%s' " % t.value[0]
 
 # Build the lexer
-spotlexer = lex.lex()
 
 # Test data for lexer
-data = raw_input(">What would you like to parse? ")
-spotlexer.input(data)
+
 
 #Lexer returns LexToken , with attributes: tok.type, tok.value, tok.lineno, tok.lexpos
-lex_tokens = []
-while True:
-	tok = lex.token()
-	if not tok: break
-	tdict = {
-			'id': tok.type, 
-			'value' : tok.value,
-			'token_num' : tok.lexpos
-			}
-	lex_tokens.append(tdict)
-print lex_tokens
+def main():
+	spotlexer = lex.lex()
+	data = raw_input(">What would you like to parse? ")
+	spotlexer.input(data)
+	lex_tokens = []
+	while True:
+		tok = lex.token()
+		if not tok: break
+		tdict = {
+				'id': tok.type, 
+				'value' : tok.value,
+				'token_num' : tok.lexpos
+				}
+		lex_tokens.append(tdict)
+	print lex_tokens
+	print parse(lex_tokens)
+
 #####################################################################################################
 # PARSER
 # Top Down Precedence Parsing
@@ -71,7 +75,7 @@ prefix("-", 100)
 symbol("(literal)").nud = lambda self: self
 
 def tokenize(program):
-    for lex_token in lex_tokens:
+    for lex_token in program:
     	if (lex_token['id'] == 'NUMBER' or lex_token['id'] == 'STRING'):
     		symbol_class = symbol_dict["(literal)"]
     		new_symbol = symbol_class()
@@ -111,6 +115,8 @@ class Scope:
 		return defined
 
 global_config.scope = Scope()
+
+main()
 
 
 
