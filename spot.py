@@ -125,14 +125,18 @@ class EndTok(Token):
 class_tokens = []
 
 for lex_token in lex_tokens:
-	if lex_token.type == 'INT':
-		new_int_tok = Token(lex_token.value)
+	
+	ltype = lex_token.type 
+	lvalue = lex_token.value
+
+	if ltype == 'INT':
+		new_int_tok = Token(lvalue)
 		class_tokens.append(new_int_tok)
-	elif lex_token.type == 'ADD_OP':
-		new_add_op_tok = AddOpTok(lex_token.value)
+	elif ltype == 'ADD_OP':
+		new_add_op_tok = AddOpTok(lvalue)
 		class_tokens.append(new_add_op_tok)
-	elif lex_token.type == 'SUB_OP':
-		new_sub_op_tok = SubOpTok(lex_token.value)
+	elif ltype == 'SUB_OP':
+		new_sub_op_tok = SubOpTok(lvalue)
 	
 new_end_tok = EndTok()
 class_tokens.append(new_end_tok)
