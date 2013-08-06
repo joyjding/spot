@@ -4,11 +4,7 @@ import ply.lex as lex #import ply library
 from symbol import *
 import global_config
 
-#############################################################
-# TOKENIZER
-# Tokenizer Uses Ply library
-#############################################################
-
+####PLY Lexer. Takes in a string --> lextokens
 
 # List of token names
 token_names = [
@@ -81,13 +77,14 @@ while True:
 		break	
 	lex_tokens.append(tok)
 
+
 #token class definitions
 
 class Token:
 	def __init__(self, value=0):
 		self.value = value
 	def __repr__(self):
-		return "<%s %r>" %(self.__class__.__name__, self.value)
+		return "(%s, %r)" %(self.__class__.__name__, self.value)
 
 class AddOpTok(Token):
 	lbp = 20
@@ -99,6 +96,24 @@ class AddOpTok(Token):
 		self.second = expression(20)
 		return self
 
+class SubOpTok(Token):
+	lbp = 20
+
+	def nulld(self):
+		return -expression(100)
+	def leftd(self, left):
+		self.first = left
+		self.second = expression(20)
+		return self
+
+class MulOpTok(Token):
+	lbp = 30
+
+	def leftd(self, left):
+		self.first = left
+		self.second = expression(30)
+		return self
+
 class EndTok(Token):
 	lbp = 0
 	def leftd(self):
@@ -108,6 +123,7 @@ class EndTok(Token):
 
 # create class token list
 class_tokens = []
+
 for lex_token in lex_tokens:
 	if lex_token.type == 'INT':
 		new_int_tok = Token(lex_token.value)
@@ -115,6 +131,9 @@ for lex_token in lex_tokens:
 	elif lex_token.type == 'ADD_OP':
 		new_add_op_tok = AddOpTok()
 		class_tokens.append(new_add_op_tok)
+	elif lex_token.type == 'SUB_OP':
+		new_sub_op_tok = SubOpTok()
+	
 	new_end_tok = EndTok()
 	class_tokens.append(new_end_tok)
 print class_tokens
@@ -124,17 +143,31 @@ print class_tokens
 # Top Down Precedence Parsing
 ###################################################################################################
 		
-def parse(program):
-    global_config.next = tokenize(program).next
-    global_config.token = global_config.next()
-    return expression()
 
 def statement():
 	pass
+
+def expression(rbp=0):
+    t = global_config.token
+    global_config.token = global_config.next()
+    left = t.nulld()
+    while rbp < global_config.token.lbp:
+        t = global_config.token
+        global_config.token = global_config.next()
+        left = t.leftd(left)
+    return left
+
 def advance(id=None):
 	if (id and global_config.token.id!=id):
 		raise SyntaxError("Expected" + id + "but got " + global_config.token.id)
-	global_config.token = lex_tokens.pop(0) 	
+	print "This is the %d-long list of class tokens" %len(class_tokens), class_tokens 
+	global_config.token = class_tokens.pop(0)
+	print "Now, this is the %d-long list of class tokens" %len(class_tokens), class_tokens
+
+def parse(program):
+    global_config.next = tokenize(program).next
+    global_config.token = global_config.next()
+    return expression()	
 
 # Process:
 # 5+5

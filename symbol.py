@@ -3,11 +3,11 @@ import global_config
 def expression(rbp=0):
     t = global_config.token
     global_config.token = global_config.next()
-    left = t.nud()
+    left = t.nulld()
     while rbp < global_config.token.lbp:
         t = global_config.token
         global_config.token = global_config.next()
-        left = t.led(left)
+        left = t.leftd(left)
     return left
 
 symbol_dict = {}
@@ -57,3 +57,18 @@ def prefix(id, bp):
 		self.second = None
 		return self
 	symbol(id).nud = nud
+
+def infixr(id, bp):
+	new_symbol_class = symbol(id, bp)
+	def led(left):
+		self.first = left
+		self.second = expression(bp-1)
+		return self
+	new_symbol_class.led = led 
+	return new_symbol_class
+
+def assignment(id):
+	assign = infixr(id, 10)
+	self.first = left
+	self.second = expression(9)
+
