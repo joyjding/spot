@@ -1,3 +1,9 @@
+#TODOS
+#generate class tokens in PLY Lexer (not very important)
+#separate lexer file from tokenizer/parser (not very important)
+
+
+
 # TOKENIZER AND PARSER FOR SPOT LANGUAGE
 
 import ply.lex as lex #import ply library
