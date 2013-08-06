@@ -129,13 +129,13 @@ for lex_token in lex_tokens:
 		new_int_tok = Token(lex_token.value)
 		class_tokens.append(new_int_tok)
 	elif lex_token.type == 'ADD_OP':
-		new_add_op_tok = AddOpTok()
+		new_add_op_tok = AddOpTok(lex_token.value)
 		class_tokens.append(new_add_op_tok)
 	elif lex_token.type == 'SUB_OP':
-		new_sub_op_tok = SubOpTok()
+		new_sub_op_tok = SubOpTok(lex_token.value)
 	
-	new_end_tok = EndTok()
-	class_tokens.append(new_end_tok)
+new_end_tok = EndTok()
+class_tokens.append(new_end_tok)
 print class_tokens
 
 #####################################################################################################
@@ -160,10 +160,10 @@ def expression(rbp=0):
 def advance(id=None):
 	if (id and global_config.token.id!=id):
 		raise SyntaxError("Expected" + id + "but got " + global_config.token.id)
-	print "This is the %d-long list of class tokens" %len(class_tokens), class_tokens 
+	print "This is the %d-long list of class tokens advance got" %len(class_tokens), class_tokens 
 	global_config.token = class_tokens.pop(0)
-	print "Now, this is the %d-long list of class tokens" %len(class_tokens), class_tokens
-
+	print "After the pop, this is now a %d-long list of class tokens" %len(class_tokens), class_tokens
+	print "Now this is the global token", global_config.token
 def parse(program):
     global_config.next = tokenize(program).next
     global_config.token = global_config.next()
