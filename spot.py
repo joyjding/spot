@@ -1,8 +1,12 @@
-#TODOS
+#--TODOS
+
 #generate class tokens in PLY Lexer (not very important)
 #separate lexer file from tokenizer/parser (not very important)
 #how to tokenize multiple words? (fairly important)
+#parse declaration and assignment separately (I'd like this, but it's not super necessary)
 
+#--Qs
+#if declaration and assignment are handled separately, how does it know how to attach the value to the variable?
 
 # TOKENIZER AND PARSER FOR SPOT LANGUAGE
 
@@ -126,6 +130,15 @@ class Token:
 	def __repr__(self):
 		return "(%s, %r)" %(self.__class__.__name__, self.value)
 
+class NameTok(Token):
+	pass
+
+class ColonTok (Token):
+	pass
+
+class PeriodTok(Token):
+	pass
+
 class BinaryOpToken(Token):
 	def __init__(self, value=0):
 		Token.__init__(self)
@@ -169,10 +182,10 @@ class EndTok(Token):
 		pass
 
 class Create_NewVarTok(Token):
-	def __init__(self, varname="None", varvalue=0):
-		Token.__init__(self)
-		self.varname = varname
-		self.varvalue = varvalue
+	def __init__(self, value = 0):
+		self.value = value
+		self.varname = None
+		self.varvalue = None
 
 	def __repr__(self):
 		return "(%s): self.varname = %s, self.varvalue = %s" %(self.__class__.__name__, self.varname, self.varvalue)
@@ -196,16 +209,16 @@ for lex_token in lex_tokens:
 		new_sub_op_tok = SubOpTok(lvalue)
 		class_tokens.append(new_sub_op_token)
 	elif ltype == 'CREATE_NEWVAR':
-		new_create_nv_tok = Create_NewVarTok()
+		new_create_nv_tok = Create_NewVarTok(lvalue)
 		class_tokens.append(new_create_nv_tok)
 	elif ltype == 'NAME':
-		new_name_tok = Token(lvalue)
+		new_name_tok = NameTok(lvalue)
 		class_tokens.append(new_name_tok)
 	elif ltype == 'COLON':
-		new_colon_tok = Token(lvalue)
+		new_colon_tok = ColonTok(lvalue)
 		class_tokens.append(new_colon_tok)
 	elif ltype == 'PERIOD':
-		new_period_tok = Token(lvalue)
+		new_period_tok = PeriodTok(lvalue)
 		class_tokens.append(new_period_tok)
 	
 new_end_tok = EndTok()
@@ -231,12 +244,11 @@ def expression(rbp=0):
         left = t.leftd(left) 
     return left
 
-def advance(id=None):
+def advance(tok_class=None):
 	global token
 	token = class_tokens.pop(0) 
-	if (id and token.value!=id):
-		raise SyntaxError("Expected", id, "but got ", token.value) 
-	
+	if (tok_class and token.__class__.__name__!=tok_class):
+		raise SyntaxError("Expected %s but got %s" % (tok_class, token.value)) 
 	
 	print "\n"
 def parse():
@@ -245,14 +257,15 @@ def parse():
     return expression()
 
 def parse_create():
-	advance('CREATE_NEWVAR')
+	advance('Create_NewVarTok')
 	create_newvar_node = token #save create_newvar token 
-	advance(':') #check for colon
-	advance('NAME') #move token to name token
+	advance('ColonTok') #check for colon
+	advance('NameTok') #move token to name token
 	name_token = token #save name_token
 	create_newvar_node.varname = name_token.value #save the value of the name token as the varname attribute of Create_NewVar
-	advance('.')
+	advance('PeriodTok')
 	return create_newvar_node
+
     
 # Process:
 # 5+5
