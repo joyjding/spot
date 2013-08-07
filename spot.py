@@ -21,7 +21,7 @@ token_names = [
 	'STRING',
 
 	'ADD_OP',
-	'MIN_OP',
+	'SUB_OP',
 	'MUL_OP',
 	'DIV_OP',
 	
@@ -58,11 +58,10 @@ tokens = token_names + list(reserved.values())
 # Token functions-----
 t_INT = r'[0-9][0-9]*'
 t_STRING = r'"[A-Za-z0-9_]*"'
-#t_NAME = r'[A-Za-z_][A-Za0-9_]*'
 
 # math operators
 t_ADD_OP = r'\+'
-t_MIN_OP = r'\-'
+t_SUB_OP = r'\-'
 t_MUL_OP = r'\*'
 t_DIV_OP = r'\/'
 
@@ -132,11 +131,50 @@ class Token:
 
 class NameTok(Token):
 	pass
-
-class ColonTok (Token):
+class IntTok(Token):
+	pass
+class StringTok(Token):
 	pass
 
+
+class CommaTok(Token):
+	pass
 class PeriodTok(Token):
+	pass
+class ColonTok (Token):
+	pass
+class SemiColonTok(Token):
+	pass
+class BangTok(Token):
+	pass
+
+
+class PossTok:
+	pass #define later
+
+#I might end up taking these 2 classes out, as I'm using () for comments
+class LParenTok:
+	pass #define later
+class RParenTok:
+	pass 
+
+# Reserved words tokens
+
+class ThisIsTok:
+	pass
+class IfTok:
+	pass
+class ElseTok:
+	pass
+class WhileTok:
+	pass
+class OrTok:
+	pass
+class AndTok:
+	pass
+class IsTok:
+	pass
+class ValueTok:
 	pass
 
 class BinaryOpToken(Token):
@@ -149,6 +187,7 @@ class BinaryOpToken(Token):
 
 class AddOpTok(BinaryOpToken):
 	lbp = 20
+	
 	def nulld(self):
 		return expression(100)
 	def leftd(self, left):
@@ -174,6 +213,13 @@ class MulOpTok(BinaryOpToken):
 		self.second = expression(30)
 		return self
 
+class DivOpTok(BinaryOpToken):
+	lbp = 30
+	def leftd(self, left):
+		self.first = left
+		self.second = expression(30)
+		return self
+
 class EndTok(Token):
 	lbp = 0
 	def leftd(self):
@@ -181,6 +227,9 @@ class EndTok(Token):
 	def nulld(self):
 		pass
 
+
+
+#Parsing classes
 class Create_NewVarTok(Token):
 	def __init__(self, value = 0):
 		self.value = value
@@ -194,32 +243,67 @@ class Create_NewVarTok(Token):
 # create class token list
 class_tokens = []
 
+token_map = {
+	"NAME" : NameTok,
+	"INT" : IntTok,
+	"STRING" : StringTok,
+
+	"ADD_OP" : AddOpTok,
+	"SUB_OP" : SubOpTok,
+	"MUL_OP" : MulOpTok,
+	"DIV_OP" : DivOpTok,
+
+	"COMMA" : CommaTok,
+	"PERIOD" : PeriodTok,
+	"COLON" : ColonTok,
+	"SEMICOLON" : SemiColonTok,
+	"BANG" : BangTok,
+
+	"POSS" : PossTok,
+
+	"LPAREN" : LParenTok,
+	"RPAREN" : RParentok,
+
+# reserved words:
+	"THISIS" : ThisIsTok,
+	"IF" : IfTok,
+	"ELSE" : ElseTok,
+	"WHILE" : WhileTok,
+	"OR" : OrTok,
+	"AND" : AndTok,
+	"IS" : IsTok,
+	"VALUE" : ValueTok
+}
+
 for lex_token in lex_tokens:
 	
 	ltype = lex_token.type 
 	lvalue = lex_token.value
 
-	if ltype == 'INT':
-		new_int_tok = Token(lvalue)
-		class_tokens.append(new_int_tok)
-	elif ltype == 'ADD_OP':
-		new_add_op_tok = AddOpTok(lvalue)
-		class_tokens.append(new_add_op_tok)
-	elif ltype == 'SUB_OP':
-		new_sub_op_tok = SubOpTok(lvalue)
-		class_tokens.append(new_sub_op_token)
-	elif ltype == 'CREATE_NEWVAR':
-		new_create_nv_tok = Create_NewVarTok(lvalue)
-		class_tokens.append(new_create_nv_tok)
-	elif ltype == 'NAME':
-		new_name_tok = NameTok(lvalue)
-		class_tokens.append(new_name_tok)
-	elif ltype == 'COLON':
-		new_colon_tok = ColonTok(lvalue)
-		class_tokens.append(new_colon_tok)
-	elif ltype == 'PERIOD':
-		new_period_tok = PeriodTok(lvalue)
-		class_tokens.append(new_period_tok)
+	new_class_token = token_map[ltype](lvalue) #create an instance of the class, pass in lvalue
+	class_tokens.append(new_class_token)
+
+	# if ltype == 'INT':
+	# 	new_int_tok = Token(lvalue)
+	# 	class_tokens.append(new_int_tok)
+	# elif ltype == 'ADD_OP':
+	# 	new_add_op_tok = AddOpTok(lvalue)
+	# 	class_tokens.append(new_add_op_tok)
+	# elif ltype == 'SUB_OP':
+	# 	new_sub_op_tok = SubOpTok(lvalue)
+	# 	class_tokens.append(new_sub_op_token)
+	# elif ltype == 'CREATE_NEWVAR':
+	# 	new_create_nv_tok = Create_NewVarTok(lvalue)
+	# 	class_tokens.append(new_create_nv_tok)
+	# elif ltype == 'NAME':
+	# 	new_name_tok = NameTok(lvalue)
+	# 	class_tokens.append(new_name_tok)
+	# elif ltype == 'COLON':
+	# 	new_colon_tok = ColonTok(lvalue)
+	# 	class_tokens.append(new_colon_tok)
+	# elif ltype == 'PERIOD':
+	# 	new_period_tok = PeriodTok(lvalue)
+	# 	class_tokens.append(new_period_tok)
 	
 new_end_tok = EndTok()
 class_tokens.append(new_end_tok)
