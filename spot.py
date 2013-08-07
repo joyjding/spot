@@ -262,7 +262,7 @@ token_map = {
 	"POSS" : PossTok,
 
 	"LPAREN" : LParenTok,
-	"RPAREN" : RParentok,
+	"RPAREN" : RParenTok,
 
 # reserved words:
 	"THISIS" : ThisIsTok,
@@ -272,7 +272,8 @@ token_map = {
 	"OR" : OrTok,
 	"AND" : AndTok,
 	"IS" : IsTok,
-	"VALUE" : ValueTok
+	"VALUE" : ValueTok,
+	"CREATE_NEWVAR" : Create_NewVarTok
 }
 
 for lex_token in lex_tokens:
