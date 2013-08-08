@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 #--TODOS
 
 #generate class tokens in PLY Lexer (not very important)
@@ -7,16 +8,16 @@
 
 #--Qs
 #if declaration and assignment are handled separately, how does it know how to attach the value to the variable?
-
+# ---> That's only taken care of in the eval step
 # TOKENIZER AND PARSER FOR SPOT LANGUAGE
 
+import sys
 import ply.lex as lex #import ply library
 token = None
 ####PLY Lexer. Takes in a string --> lextokens
 
 # List of token names
 token_names = [
-	'NAME',
 	'INT',
 	'STRING',
 
@@ -34,9 +35,12 @@ token_names = [
 	'POSS',
 	
 	'LPAREN',
-	'RPAREN',	
-
+	'RPAREN',
+	
+	'NAME',
 ]
+
+# t_WHITESPACE= r" \t"
 
 reserved = {
 	'this is' : 'THISIS',
@@ -45,9 +49,9 @@ reserved = {
 	'while' : 'WHILE',
 	'or' : 'OR',
 	'and' : 'AND',
-	
-	#create a new variable and assign it a value
-	'create_new_variable' : 'CREATE_NEWVAR',
+	'create' : 'CREATE',
+	'new' : 'NEW',
+	'variable' : 'VARIABLE',
 	'is' : 'IS',
 	'value' : 'VALUE',
 	}
@@ -77,12 +81,6 @@ t_POSS = r"'s"
 t_LPAREN = r'\('
 t_RPAREN = r'\)'
 
-
-# def t_NEWTOKEN(t):
-# 	r'create new var'
-# 	return CreateVarToken()
-# 	# return ....
-
 def t_NAME(t):
     r'[a-zA-Z_][a-zA-Z_0-9]*'
     t.type = reserved.get(t.value,'NAME')    # Check for reserved words
@@ -98,27 +96,7 @@ t_ignore = ' \t'
 def t_error(t):
 	print "Illegal character '%s' " % t.value[0]
 
-# Build the lexer
-spotlexer = lex.lex()
-
-# Test data for the lexer
-data = raw_input(">What would you like to parse? ")
-
-# Lex the data
-spotlexer.input(data)
-#Lexer returns LexToken, with attributes: tok.type, tok.value, tok.lineno, tok.lexpos
-
-#create lex_token list
-lex_tokens = []
-while True:
-	tok = lex.token()
-	if not tok: 
-		break	
-	lex_tokens.append(tok)
-
-print "these are the lex tokens", lex_tokens
-#token class definitions
-
+#class token definitions
 class Token:
 	def __init__(self, value=0):
 		self.value = value
@@ -227,7 +205,12 @@ class EndTok(Token):
 	def nulld(self):
 		pass
 
-
+class CreateTok(Token):
+	pass
+class NewTok(Token):
+	pass
+class VariableTok(Token):
+	pass
 
 #Parsing classes
 class Create_NewVarTok(Token):
@@ -273,48 +256,15 @@ token_map = {
 	"AND" : AndTok,
 	"IS" : IsTok,
 	"VALUE" : ValueTok,
-	"CREATE_NEWVAR" : Create_NewVarTok
+	"CREATE" : CreateTok,
+	"NEW" : NewTok,
+	"VARIABLE" : VariableTok,
 }
-
-for lex_token in lex_tokens:
-	
-	ltype = lex_token.type 
-	lvalue = lex_token.value
-
-	new_class_token = token_map[ltype](lvalue) #create an instance of the class, pass in lvalue
-	class_tokens.append(new_class_token)
-
-	# if ltype == 'INT':
-	# 	new_int_tok = Token(lvalue)
-	# 	class_tokens.append(new_int_tok)
-	# elif ltype == 'ADD_OP':
-	# 	new_add_op_tok = AddOpTok(lvalue)
-	# 	class_tokens.append(new_add_op_tok)
-	# elif ltype == 'SUB_OP':
-	# 	new_sub_op_tok = SubOpTok(lvalue)
-	# 	class_tokens.append(new_sub_op_token)
-	# elif ltype == 'CREATE_NEWVAR':
-	# 	new_create_nv_tok = Create_NewVarTok(lvalue)
-	# 	class_tokens.append(new_create_nv_tok)
-	# elif ltype == 'NAME':
-	# 	new_name_tok = NameTok(lvalue)
-	# 	class_tokens.append(new_name_tok)
-	# elif ltype == 'COLON':
-	# 	new_colon_tok = ColonTok(lvalue)
-	# 	class_tokens.append(new_colon_tok)
-	# elif ltype == 'PERIOD':
-	# 	new_period_tok = PeriodTok(lvalue)
-	# 	class_tokens.append(new_period_tok)
-	
-new_end_tok = EndTok()
-class_tokens.append(new_end_tok)
-print class_tokens
 
 #####################################################################################################
 # PARSER
 # Top Down Precedence Parsing
-###################################################################################################
-		
+###################################################################################################		
 
 def statement():
 	pass
@@ -333,7 +283,7 @@ def advance(tok_class=None):
 	global token
 	token = class_tokens.pop(0) 
 	if (tok_class and token.__class__.__name__!=tok_class):
-		raise SyntaxError("Expected %s but got %s" % (tok_class, token.value)) 
+		raise SyntaxError("Expected %s but got %s" % (tok_class, token.__class__.__name__)) 
 	
 	print "\n"
 def parse():
@@ -341,16 +291,20 @@ def parse():
     print "parsing done"
     return expression()
 
-def parse_create():
-	advance('Create_NewVarTok')
-	create_newvar_node = token #save create_newvar token 
-	advance('ColonTok') #check for colon
-	advance('NameTok') #move token to name token
-	name_token = token #save name_token
-	create_newvar_node.varname = name_token.value #save the value of the name token as the varname attribute of Create_NewVar
+def parse_create(): 
+	#advance('CreateTok') #advance on create - taken out b/c already advancing once
+	advance('NewTok') #advance on new
+	advance('VariableTok') #advance on variable
+	advance('ColonTok') #advance on colon
+	advance('NameTok')
+	name_token = token #save name token as name_token
+	create_newvarnode = Create_NewVarTok() #create new create_new_variable node
+	create_newvarnode.varname = name_token.value #save the value of the name token as the varname attribute of Create_NewVarTok 
 	advance('PeriodTok')
-	return create_newvar_node
+	return create_newvarnode
 
+def parse_if():
+	advance('IfTok')
     
 # Process:
 # 5+5
@@ -358,15 +312,62 @@ def parse_create():
 # create all the corresponding class instances
 # parse those class instance tokens
 
+def main():
+	filename = sys.argv[1] if len(sys.argv) > 1 else None
 
+	if filename:
+		source = open(filename).read()
+	else:
+		source = raw_input(">What would you like to parse? ")
+	
+#LEXING	
+	# Build the lexer
+	spotlexer = lex.lex()
 
+	# Lex the data
+	spotlexer.input(source)
+	#Lexer returns LexToken, with attributes: tok.type, tok.value, tok.lineno, tok.lexpos
 
+	#create lex_token list
+	lex_tokens = []
+	while True:
+		tok = lex.token()
+		if not tok:
+			break	
+		lex_tokens.append(tok)
 
+	print "these are the lex tokens", lex_tokens
+	#token class definitions
 
+	for lex_token in lex_tokens:
+		
+		ltype = lex_token.type 
+		lvalue = lex_token.value
 
+		new_class_token = token_map[ltype](lvalue) #create an instance of the class, pass in lvalue
+		class_tokens.append(new_class_token)
+	new_end_tok = EndTok()
+	class_tokens.append(new_end_tok)
 
+	print "these are the class tokens", class_tokens
+	
+#PARSING
+	advance()
+	print token
+	print token.__class__.__name__
+	if token.__class__.__name__ == 'CreateTok': 
+		print "now running parse_create()"
+		parse_create_result = parse_create()
+		print parse_create_result
+		return parse_create_result
 
+		#now running parse_create()
+		#parse_create_node = parse_create()
+		#print parse_create_node
+		#return parse_create_node
 
+if __name__ == "__main__":
+	main()
 
 
 
