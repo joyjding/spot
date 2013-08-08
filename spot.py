@@ -88,7 +88,7 @@ t_BANG = r'!'
 t_POSS = r"'s"
 
 def t_COMMENT(t):
-    r'((...))'
+    r'\([^)]*\)' #\( to get '(', [^]* to get any no. of characters inside  
     pass
     # No return value. Token discarded
 def t_NAME(t):
@@ -304,9 +304,9 @@ def advance(tok_class=None):
 	
 	print "\n"
 def parse():
-	pass
+	parse_expression()
 def parse_expression():
-    advance() #put something into global token
+	#put something into global token
     print "parsing done"
     return expression()
 
