@@ -6,6 +6,12 @@
 #how to tokenize multiple words? (fairly important)
 #parse declaration and assignment separately (I'd like this, but it's not super necessary)
 
+
+#Shiny bits:
+# Make "ATok" optional (would be pretty fun)
+# Verb conjugations
+# Indents
+
 #--Qs
 #if declaration and assignment are handled separately, how does it know how to attach the value to the variable?
 # ---> That's only taken care of in the eval step
@@ -40,8 +46,6 @@ token_names = [
 	'NAME',
 ]
 
-# t_WHITESPACE= r" \t"
-
 reserved = {
 	'this is' : 'THISIS',
 	'if' : 'IF',
@@ -54,6 +58,11 @@ reserved = {
 	'variable' : 'VARIABLE',
 	'is' : 'IS',
 	'value' : 'VALUE',
+	'define' : 'DEFINE',
+	'a' : 'A',
+	'function' : 'FUNCTION',
+	'the' : 'THE',
+	'condition' : 'CONDITION',
 	}
 
 #All tokens
@@ -78,9 +87,10 @@ t_BANG = r'!'
 
 t_POSS = r"'s"
 
-t_LPAREN = r'\('
-t_RPAREN = r'\)'
-
+def t_COMMENT(t):
+    r'((...))'
+    pass
+    # No return value. Token discarded
 def t_NAME(t):
     r'[a-zA-Z_][a-zA-Z_0-9]*'
     t.type = reserved.get(t.value,'NAME')    # Check for reserved words
@@ -130,13 +140,6 @@ class BangTok(Token):
 class PossTok:
 	pass #define later
 
-#I might end up taking these 2 classes out, as I'm using () for comments
-class LParenTok:
-	pass #define later
-class RParenTok:
-	pass 
-
-# Reserved words tokens
 
 class ThisIsTok:
 	pass
@@ -153,6 +156,10 @@ class AndTok:
 class IsTok:
 	pass
 class ValueTok:
+	pass
+class TheTok:
+	pass
+class ConditionTok:
 	pass
 
 class BinaryOpToken(Token):
@@ -222,6 +229,14 @@ class Create_NewVarTok(Token):
 	def __repr__(self):
 		return "(%s): self.varname = %s, self.varvalue = %s" %(self.__class__.__name__, self.varname, self.varvalue)
 
+class DefineTok(Token):
+	pass
+class ATok(Token):
+	pass
+class FunctionTok(Token):
+	pass
+class InstructionsTok(Token):
+	pass
 
 # create class token list
 class_tokens = []
@@ -244,9 +259,6 @@ token_map = {
 
 	"POSS" : PossTok,
 
-	"LPAREN" : LParenTok,
-	"RPAREN" : RParenTok,
-
 # reserved words:
 	"THISIS" : ThisIsTok,
 	"IF" : IfTok,
@@ -259,6 +271,11 @@ token_map = {
 	"CREATE" : CreateTok,
 	"NEW" : NewTok,
 	"VARIABLE" : VariableTok,
+	"DEFINE" : DefineTok,
+	"A" : ATok,
+	"FUNCTION" : FunctionTok,
+	"INSTRUCTIONS" : InstructionsTok,
+	"THE" : TheTok
 }
 
 #####################################################################################################
@@ -287,12 +304,15 @@ def advance(tok_class=None):
 	
 	print "\n"
 def parse():
+	pass
+def parse_expression():
     advance() #put something into global token
     print "parsing done"
     return expression()
 
 def parse_create(): 
 	#advance('CreateTok') #advance on create - taken out b/c already advancing once
+	advance('ATok') 
 	advance('NewTok') #advance on new
 	advance('VariableTok') #advance on variable
 	advance('ColonTok') #advance on colon
@@ -303,15 +323,26 @@ def parse_create():
 	advance('PeriodTok')
 	return create_newvarnode
 
+def parse_function():
+	#advance('DefineTok')
+	advance('ATok')
+	advance('NewTok')
+	advance('FunctionTok')
+	advance('ColonTok')
+	advance('NameTok')
+	advance('InstructionsTok')
+	advance('BlockTok')
+
 def parse_if():
 	advance('IfTok')
-    
-# Process:
-# 5+5
-# [(num, 5), (add, +), (num, 5)]
-# create all the corresponding class instances
-# parse those class instance tokens
+	advance('TheTok')
+	advance('ConditionTok')
+	advance('CommaTok')
+	#parse_expression()
+	advance('COLON')
+	#parse_block()
 
+    
 def main():
 	filename = sys.argv[1] if len(sys.argv) > 1 else None
 
@@ -337,8 +368,8 @@ def main():
 		lex_tokens.append(tok)
 
 	print "these are the lex tokens", lex_tokens
-	#token class definitions
 
+#convert lextokens to class tokens
 	for lex_token in lex_tokens:
 		
 		ltype = lex_token.type 
@@ -352,19 +383,33 @@ def main():
 	print "these are the class tokens", class_tokens
 	
 #PARSING
-	advance()
-	print token
-	print token.__class__.__name__
-	if token.__class__.__name__ == 'CreateTok': 
-		print "now running parse_create()"
-		parse_create_result = parse_create()
-		print parse_create_result
-		return parse_create_result
+	
+	print "before the first advance, the token is", token
+	advance() #first advance, to get a token into it
+	print "after the first advance, now there should be a token", token
+	while token.__class__.__name__ != 'EndTok':
+		parse() #parsing goes here	
+		print " after advance() now the current token is", token
+	
+	# advance()
+	# while token.__class__.__name__ != 'EndTok':
+	# 	# print token
+		# print token.__class__.__name__
+		
+		#parse_expression()
+#commented out to work on other parse functions
+		# if token.__class__.__name__ == 'CreateTok': 
+		# 	print "now running parse_create()"
+		# 	parse_create_result = parse_create()
+		# 	print parse_create_result
+		# 	return parse_create_result
+		# if token.__class__.__name__ == 'DefineTok':
+		# 	print "now running parse_function()"
 
-		#now running parse_create()
-		#parse_create_node = parse_create()
-		#print parse_create_node
-		#return parse_create_node
+			#parse_create_result = parse_create()
+			# print parse_create_result
+			# return parse_create_result
+
 
 if __name__ == "__main__":
 	main()
