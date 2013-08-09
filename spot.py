@@ -215,6 +215,10 @@ class ConditionTok:
 	pass
 class TakesTok(Token):
 	pass
+class OrTok(Token):
+	pass
+class AndTok(Token):
+	pass
 
 #Statement tokens
 
@@ -222,7 +226,9 @@ class ElseTok:
 	pass
 
 class IfTheConditionTok(Token):
-	pass
+	def stmtd():
+		return "hello"
+
 class IfTheConditionNode(Token):
 	def __init__(self, value = 0):
 		self.value = value
@@ -286,6 +292,11 @@ class BlockTok:
 	def stmtd(self):
 		self.statements = block()
 		return self
+class Program:
+	def stmtd(self):
+		self.children = statement_list()
+		return self
+
 
 # Basic Math classes
 class AddOpTok(BinaryOpToken):
@@ -375,7 +386,6 @@ token_map = {
 	"VALUE" : ValueTok,
 	"CREATE_NEW_VARIABLE" : Create_A_New_VarTok,
 	"DEFINE_NEW_FUNCTION" : DefineNewFuncTok,
-	"INSTRUCTIONS" : InstructionsTok,
 	"IF_THE_CONDITION" : IfTheConditionTok,
 	"WHILE_THE_CONDITION" : WhileTheConditionTok,
 	"FOLLOW_THESE_INSTRUCTIONS" : FollowTheseInstructionsTok,
@@ -386,8 +396,18 @@ token_map = {
 # Top Down Precedence Parsing
 ###################################################################################################		
 
-def statement():
-	pass
+def statement_list():
+	statements = []
+
+	while token.__class__.__name__ != 'EndTok':
+		statements.append(statement())	
+	return statements
+
+# def statement():
+# 	if token.__getattribute__('stmtd'):
+# 		return token.stmtd()
+# 	else: 
+# 		return expression(0)
 
 def expression(rbp=0):
     t = token
@@ -408,10 +428,6 @@ def advance(tok_class=None):
 	print "\n"
 def next():
 	pass
-def parse_all():	
-	parse_expression_result = parse_expression()
-	print parse_expression_result
-	return parse_expression_result
 
 def block():
 	# stmts = []
@@ -441,7 +457,7 @@ def parse_function():
 	#check that the name is the same
 	advance('TakesTok')
 	advance('IntTok')
-	advance('InstructionsTok')
+	advance('FollowTheseInstructionsTok')
 	advance('ColonTok')
 	advance('BlockTok')
 
@@ -457,24 +473,33 @@ def parse_if():
 	advance() #block???
 	#parse_block()
 
-    
-def main():
-	filename = sys.argv[1] if len(sys.argv) > 1 else None
+def statement(): # parses one statement
+	# if the token has a stmtd attribute, invoke it
+	if hasattr(token, "stmtd"):
+		return token.stmtd()
+	# otherwise, eval as an expression
+	result = expression()
+	print result
+	return result
 
-	if filename:
-		source = open(filename).read()
-	else:
-		source = raw_input(">What would you like to parse? ")
+def parse():	
+	advance() #to put the first token in
+	p = Program()
+	p.stmtd()	
+	return p
+
+def make_class_tokens(source):
 	
-#LEXING	
-	# Build the lexer
-	spotlexer = lex.lex()
+	#-------turn a string into lextokens
 
+	# build the lexer
+	spotlexer = lex.lex()
+	
 	# Lex the data
 	spotlexer.input(source)
 	#Lexer returns LexToken, with attributes: tok.type, tok.value, tok.lineno, tok.lexpos
-
-	#create lex_token list
+	
+	# create lex_tokens list
 	lex_tokens = []
 	while True:
 		tok = lex.token()
@@ -484,7 +509,8 @@ def main():
 
 	print "these are the lex tokens", lex_tokens
 
-#convert lextokens to class tokens
+	#------convert lextokens to class tokens
+	
 	for lex_token in lex_tokens:
 		
 		ltype = lex_token.type 
@@ -496,31 +522,18 @@ def main():
 	class_tokens.append(new_end_tok)
 
 	print "these are the class tokens", class_tokens
-	
-#PARSING
-	
-	advance() #first advance, to get a token into it
-	while token.__class__.__name__ != 'EndTok':
-		parse_all() #parsing goes here	
-	
-	# advance()
-	# while token.__class__.__name__ != 'EndTok':
-	# 	# print token
-		# print token.__class__.__name__
-		
-		#parse_expression()
-#commented out to work on other parse functions
-		# if token.__class__.__name__ == 'CreateTok': 
-		# 	print "now running parse_create()"
-		# 	parse_create_result = parse_create()
-		# 	print parse_create_result
-		# 	return parse_create_result
-		# if token.__class__.__name__ == 'DefineTok':
-		# 	print "now running parse_function()"
+	return class_tokens
 
-			#parse_create_result = parse_create()
-			# print parse_create_result
-			# return parse_create_result
+def main():
+	filename = sys.argv[1] if len(sys.argv) > 1 else None
+
+	if filename:
+		source = open(filename).read()
+	else:
+		source = raw_input(">What would you like to parse? ")
+	
+	class_tokens = make_class_tokens(source)
+	parse()
 
 
 if __name__ == "__main__":
