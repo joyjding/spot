@@ -3,12 +3,10 @@
 
 #generate class tokens in PLY Lexer (not very important)
 #separate lexer file from tokenizer/parser (not very important)
-#how to tokenize multiple words? (fairly important)
 #parse declaration and assignment separately (I'd like this, but it's not super necessary)
 
 
 #Shiny bits:
-# Make "ATok" optional (would be pretty fun)
 # Verb conjugations
 # Indents
 # I'd love to make all the math operators words...
@@ -22,14 +20,27 @@
 
 
 #--Qs
+
+
+
+#DONE
+#How to tokenize multiple words? (fairly important) --->Regex
+#Make "ATok" optional (would be pretty fun)
 #if declaration and assignment are handled separately, how does it know how to attach the value to the variable?
 # ---> That's only taken care of in the eval step
+#Capitalization -->regex
+
+
 # TOKENIZER AND PARSER FOR SPOT LANGUAGE
+
 
 import sys
 import ply.lex as lex #import ply library
 token = None
-####PLY Lexer. Takes in a string --> lextokens
+
+#----------------NOW WE LEX -----------------------------------------------------------------------------
+#PLY Lexer. Takes in a string --> lextokens
+#--------------------------------------------------------------------------------------------------------
 
 # List of token names
 token_names = [
@@ -48,39 +59,31 @@ token_names = [
 	'COLON',
 	'SEMICOLON',
 	'BANG',
+	'LCURLY',
+	'RCURLY',
 	
 	'POSS',
 	
 	'NAME',
 	'INDENT',
-	#'SPACE',
-
-	'CREATE_VAR',
+	'IF_THE_CONDITION',
+	'CREATE_NEW_VARIABLE',
+	'DEFINE_NEW_FUNCTION',
+	'WHILE_THE_CONDITION',
+	'FOLLOW_THESE_INSTRUCTIONS',
 ]
 
 reserved = {
 	'this is' : 'THISIS',
-	'if' : 'IF',
 	'else' : 'ELSE',
 	'while' : 'WHILE',
 	'or' : 'OR',
 	'and' : 'AND',
-	'create' : 'CREATE',
-	'new' : 'NEW',
-	'variable' : 'VARIABLE',
 	'is' : 'IS',
 	'value' : 'VALUE',
-	'define' : 'DEFINE',
-	'a' : 'A',
-	'function' : 'FUNCTION',
-	'the' : 'THE',
-	'condition' : 'CONDITION',
-	
-
-	#'test the test space' : 'TESTTESTTEST',
 	}
 
-#All tokens
+# All tokens
 tokens = token_names + list(reserved.values())
 
 # Token functions-----
@@ -103,28 +106,45 @@ t_COLON = r':'
 t_SEMICOLON = r';'
 t_BANG = r'!'
 t_INDENT = r'\t'
-
-#t_SPACE = r'[ ]'
-
-t_POSS = r"'s"
-
-#complex reserved words
-#t_TEST = r'one\stwo'
+t_LCURLY = r'{'
+t_RCURLY = r'}'
 
 # A string containing ignored chars
 t_ignore = ' '
 
-def t_CREATE_VAR(t):
-	r'create\snew\svariable'
+# more complex lexing functions
+def t_POSS(t):
+	r'\'(\'s)?'
 	return t
 
-def t_COMMENT(t):
+def t_CREATE_NEW_VARIABLE(t):
+	r'[Cc]reate\s(a\s)?new\svariable'
+	return t
+
+def t_IF_THE_CONDITION(t):
+	r'[Ii]f\sthe\scondition'
+	return t
+
+def t_DEFINE_NEW_FUNCTION(t):
+	r'[Dd]efine\s(a\s)?new\sfunction'
+	return t
+def t_WHILE_THE_CONDITION(t):
+	r'[Ww]hile\sthe\scondition'
+	return t
+
+def t_FOLLOW_THESE_INSTRUCTIONS(t):
+	r'[Ff]ollow\s(s\s)?these\sinstructions'
+	return t
+
+# No return value. Token discarded
+def t_COMMENT(t): 
     r'\([^)]*\)' #\( to get '(', [^]* to get any no. of characters inside  
     pass
-    # No return value. Token discarded
+
+# Defines a rule that checks for reserved words  
 def t_NAME(t):
     r'[a-zA-Z_][a-zA-Z_0-9]*'
-    t.type = reserved.get(t.value,'NAME')    # Check for reserved words
+    t.type = reserved.get(t.value,'NAME')
     return t
 
 # Defines a rule for tracking line numbers
@@ -135,7 +155,14 @@ def t_newline(t):
 def t_error(t):
 	print "Illegal character '%s' " % t.value[0]
 
-#class token definitions
+
+
+#----------------NOW WE CREATE CLASS TOKENS!-------------------------------------------------------------
+#PLY Lexer. Takes in a string --> lextokens
+#--------------------------------------------------------------------------------------------------------
+
+
+#Most basic token classes
 class Token:
 	def __init__(self, value=0):
 		self.value = value
@@ -146,14 +173,22 @@ class Token:
 	def __repr__(self):
 		return "(%s, %r)" %(self.__class__.__name__, self.value)
 
-class NameTok(Token):
-	pass
+class BinaryOpToken(Token):
+	def __init__(self, value=0):
+		Token.__init__(self)
+		self.first = None
+		self.second = None
+	def __repr__(self):
+		return "(%s, %r): self.first = %s, self.second = %s" %(self.__class__.__name__, self.value, self.first, self.second)
+
+
+#Primitives
 class IntTok(Token):
 	pass
 class StringTok(Token):
 	pass
 
-
+#Basic punctuation
 class CommaTok(Token):
 	pass
 class PeriodTok(Token):
@@ -164,44 +199,95 @@ class SemiColonTok(Token):
 	pass
 class BangTok(Token):
 	pass
-
-
+class IndentTok(Token):
+	pass
 class PossTok:
-	pass #define later
+	pass
 
-
+#Syntax
 class ThisIsTok:
 	pass
-class IfTok(Token):
-	pass
-class ElseTok:
-	pass
-class WhileTok:
-	pass
-class OrTok:
-	pass
-class AndTok:
-	pass
-
-	
 class ValueTok:
 	pass
 class TheTok:
 	pass
 class ConditionTok:
 	pass
-
-class IndentTok(Token):
+class TakesTok(Token):
 	pass
 
-class BinaryOpToken(Token):
-	def __init__(self, value=0):
-		Token.__init__(self)
-		self.first = None
-		self.second = None
-	def __repr__(self):
-		return "(%s, %r): self.first = %s, self.second = %s" %(self.__class__.__name__, self.value, self.first, self.second)
+#Statement tokens
 
+class ElseTok:
+	pass
+
+class IfTheConditionTok(Token):
+	pass
+class IfTheConditionNode(Token):
+	def __init__(self, value = 0):
+		self.value = value
+		self.expression = expression
+		self.block = block
+
+	def __repr__(self):
+		return "(%s): self.expression = %s, self.block = %s" %(self.__class__.__name__, self.expression, self.block)
+class WhileTheConditionTok(Token):
+	def stmd():
+		advance('COMMA')
+		advance() #move on to the beginning of the expression
+		condition = expression() #parse the expression
+		self.condition = condition #set left fo
+		advance('COMMA')
+		advance('FollowTheseInstructionsTok')
+		advance('COLON')
+		advance('{')
+		#parse block goes here
+class Create_A_New_VarTok(Token):
+	pass
+class Create_NewVarNode(Token):
+	def __init__(self, value = 0):
+		self.value = value
+		self.varname = None
+		self.varvalue = None
+
+	def __repr__(self):
+		return "(%s): self.varname = %s, self.varvalue = %s" %(self.__class__.__name__, self.varname, self.varvalue)
+
+class DefineNewFuncTok(Token):
+	pass 
+
+class FollowTheseInstructionsTok(Token):
+	pass 
+
+# Misc tokens
+
+class IsTok(BinaryOpToken):
+	#serves the same function as ==
+	lbp = 40
+	def leftd(self, left):
+		self.first = left
+		self.second = expression(40)
+		return self
+class NameTok(Token):
+	pass
+
+class EndTok(Token):
+	lbp = 0
+	def leftd(self):
+		pass
+	def nulld(self):
+		pass
+
+#parsing classes
+
+class BlockTok:
+	def __init__(self, statements):
+		self.statements = statements
+	def stmtd(self):
+		self.statements = block()
+		return self
+
+# Basic Math classes
 class AddOpTok(BinaryOpToken):
 	lbp = 50
 	
@@ -251,56 +337,8 @@ class LessThanOpTok(BinaryOpToken):
 		self.second = expression(40)
 		return self
 
-class IsTok(BinaryOpToken):
-	#serves the same function as ==
-	lbp = 40
-	def leftd(self, left):
-		self.first = left
-		self.second = expression(40)
-		return self
 
-class EndTok(Token):
-	lbp = 0
-	def leftd(self):
-		pass
-	def nulld(self):
-		pass
-
-class CreateTok(Token):
-	pass
-class NewTok(Token):
-	pass
-class VariableTok(Token):
-	pass
-
-#Parsing classes
-class Create_NewVarTok(Token):
-	def __init__(self, value = 0):
-		self.value = value
-		self.varname = None
-		self.varvalue = None
-
-	def __repr__(self):
-		return "(%s): self.varname = %s, self.varvalue = %s" %(self.__class__.__name__, self.varname, self.varvalue)
-
-class DefineTok(Token):
-	pass
-class ATok(Token):
-	pass
-class FunctionTok(Token):
-	pass
-class InstructionsTok(Token):
-	pass
-
-class BlockTok:
-	def __init__(self, statements):
-		self.statements = statements
-	def stmtd(self):
-		self.statements = block()
-		return self
-
-
-# create class token list
+# create class token list and token map dict ----------------------------------
 class_tokens = []
 
 token_map = {
@@ -330,21 +368,17 @@ token_map = {
 
 # reserved words:
 	"THISIS" : ThisIsTok,
-	"IF" : IfTok,
 	"ELSE" : ElseTok,
-	"WHILE" : WhileTok,
 	"OR" : OrTok,
 	"AND" : AndTok,
 	"IS" : IsTok,
 	"VALUE" : ValueTok,
-	"CREATE" : CreateTok,
-	"NEW" : NewTok,
-	"VARIABLE" : VariableTok,
-	"DEFINE" : DefineTok,
-	"A" : ATok,
-	"FUNCTION" : FunctionTok,
+	"CREATE_NEW_VARIABLE" : Create_A_New_VarTok,
+	"DEFINE_NEW_FUNCTION" : DefineNewFuncTok,
 	"INSTRUCTIONS" : InstructionsTok,
-	"THE" : TheTok
+	"IF_THE_CONDITION" : IfTheConditionTok,
+	"WHILE_THE_CONDITION" : WhileTheConditionTok,
+	"FOLLOW_THESE_INSTRUCTIONS" : FollowTheseInstructionsTok,
 }
 
 #####################################################################################################
@@ -372,7 +406,9 @@ def advance(tok_class=None):
 		raise SyntaxError("Expected %s but got %s" % (tok_class, token.__class__.__name__)) 
 	
 	print "\n"
-def parse():
+def next():
+	pass
+def parse_all():	
 	parse_expression_result = parse_expression()
 	print parse_expression_result
 	return parse_expression_result
@@ -387,35 +423,38 @@ def parse_expression():
     return expression()
 
 def parse_create(): 
-	#advance('CreateTok') #advance on create - taken out b/c already advancing once
-	advance('ATok') 
-	advance('NewTok') #advance on new
-	advance('VariableTok') #advance on variable
+	advance('Create_A_New_VarTok') #advance on create - taken out b/c already advancing once
 	advance('ColonTok') #advance on colon
 	advance('NameTok')
 	name_token = token #save name token as name_token
-	create_newvarnode = Create_NewVarTok() #create new create_new_variable node
+	create_newvarnode = Create_NewVarNode() #create new create_new_variable node
 	create_newvarnode.varname = name_token.value #save the value of the name token as the varname attribute of Create_NewVarTok 
 	advance('PeriodTok')
 	return create_newvarnode
 
 def parse_function():
-	#advance('DefineTok')
-	advance('ATok')
-	advance('NewTok')
-	advance('FunctionTok')
+	"""Define a new function: numapples. Numapples takes 0 arguments. Instructions"""
+	advance('DefineANewFuncTok')
 	advance('ColonTok')
 	advance('NameTok')
+	advance('PeriodTok')
+	#check that the name is the same
+	advance('TakesTok')
+	advance('IntTok')
 	advance('InstructionsTok')
+	advance('ColonTok')
 	advance('BlockTok')
 
 def parse_if():
-	advance('IfTok')
-	advance('TheTok')
-	advance('ConditionTok')
+	""" If the condition, expression: do this."""
+	
+	advance('IfTheConditionTok')
+	new_node = IfTheConditionNode()
 	advance('CommaTok')
-	#parse_expression()
+	new_node.expression = parse_expression()
 	advance('COLON')
+
+	advance() #block???
 	#parse_block()
 
     
@@ -462,7 +501,7 @@ def main():
 	
 	advance() #first advance, to get a token into it
 	while token.__class__.__name__ != 'EndTok':
-		parse() #parsing goes here	
+		parse_all() #parsing goes here	
 	
 	# advance()
 	# while token.__class__.__name__ != 'EndTok':
