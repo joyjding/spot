@@ -11,6 +11,15 @@
 # Make "ATok" optional (would be pretty fun)
 # Verb conjugations
 # Indents
+# I'd love to make all the math operators words...
+
+#Add program class
+#Add evaluate while behavior to while token
+# | While | Expression | Block |
+# __doc__ returns the doc string
+#__getattribute__(...)
+#  x.__getattribute__('name') <==> x.name
+
 
 #--Qs
 #if declaration and assignment are handled separately, how does it know how to attach the value to the variable?
@@ -31,6 +40,8 @@ token_names = [
 	'SUB_OP',
 	'MUL_OP',
 	'DIV_OP',
+	'GREATER_THAN_OP',
+	'LESS_THAN_OP',
 	
 	'COMMA',
 	'PERIOD',
@@ -40,10 +51,8 @@ token_names = [
 	
 	'POSS',
 	
-	'LPAREN',
-	'RPAREN',
-	
 	'NAME',
+	'INDENT',
 ]
 
 reserved = {
@@ -78,12 +87,16 @@ t_SUB_OP = r'\-'
 t_MUL_OP = r'\*'
 t_DIV_OP = r'\/'
 
+t_GREATER_THAN_OP = r'<'
+t_LESS_THAN_OP = r'>'
+
 #delimiters
 t_COMMA = r','
 t_PERIOD = r'\.'
 t_COLON = r':'
 t_SEMICOLON = r';'
 t_BANG = r'!'
+t_INDENT = r'\t'
 
 t_POSS = r"'s"
 
@@ -101,7 +114,7 @@ def t_newline(t):
 	r'\n+'
 	t.lexer.lineno += len(t.value)
 # A string containing ignored chars (spaces and tabs)
-t_ignore = ' \t'
+t_ignore = ' '
 
 def t_error(t):
 	print "Illegal character '%s' " % t.value[0]
@@ -143,7 +156,7 @@ class PossTok:
 
 class ThisIsTok:
 	pass
-class IfTok:
+class IfTok(Token):
 	pass
 class ElseTok:
 	pass
@@ -153,13 +166,16 @@ class OrTok:
 	pass
 class AndTok:
 	pass
-class IsTok:
-	pass
+
+	
 class ValueTok:
 	pass
 class TheTok:
 	pass
 class ConditionTok:
+	pass
+
+class IndentTok(Token):
 	pass
 
 class BinaryOpToken(Token):
@@ -171,7 +187,7 @@ class BinaryOpToken(Token):
 		return "(%s, %r): self.first = %s, self.second = %s" %(self.__class__.__name__, self.value, self.first, self.second)
 
 class AddOpTok(BinaryOpToken):
-	lbp = 20
+	lbp = 50
 	
 	def nulld(self):
 		return expression(100)
@@ -181,7 +197,7 @@ class AddOpTok(BinaryOpToken):
 		return self
 	
 class SubOpTok(BinaryOpToken):
-	lbp = 20
+	lbp = 50
 
 	def nulld(self):
 		return -expression(100)
@@ -191,7 +207,7 @@ class SubOpTok(BinaryOpToken):
 		return self
 
 class MulOpTok(BinaryOpToken):
-	lbp = 30
+	lbp = 60
 
 	def leftd(self, left):
 		self.first = left
@@ -199,10 +215,32 @@ class MulOpTok(BinaryOpToken):
 		return self
 
 class DivOpTok(BinaryOpToken):
-	lbp = 30
+	lbp = 60
 	def leftd(self, left):
 		self.first = left
 		self.second = expression(30)
+		return self
+
+class GreaterThanOpTok(BinaryOpToken):
+	lbp = 40
+	def leftd(self, left):
+		self.first = left
+		self.second = expression(40)
+		return self
+
+class LessThanOpTok(BinaryOpToken):
+	lbp = 40
+	def leftd(self, left):
+		self.first = left
+		self.second = expression(40)
+		return self
+
+class IsTok(BinaryOpToken):
+	#serves the same function as ==
+	lbp = 40
+	def leftd(self, left):
+		self.first = left
+		self.second = expression(40)
 		return self
 
 class EndTok(Token):
@@ -238,6 +276,14 @@ class FunctionTok(Token):
 class InstructionsTok(Token):
 	pass
 
+class BlockTok:
+	def __init__(self, statements):
+		self.statements = statements
+	def stmtd(self):
+		self.statements = block()
+		return self
+
+
 # create class token list
 class_tokens = []
 
@@ -246,16 +292,23 @@ token_map = {
 	"INT" : IntTok,
 	"STRING" : StringTok,
 
+#math
 	"ADD_OP" : AddOpTok,
 	"SUB_OP" : SubOpTok,
 	"MUL_OP" : MulOpTok,
 	"DIV_OP" : DivOpTok,
 
+#comparitors
+	"GREATER_THAN_OP" : GreaterThanOpTok,
+	"LESS_THAN_OP" : LessThanOpTok,
+
+#punctuation
 	"COMMA" : CommaTok,
 	"PERIOD" : PeriodTok,
 	"COLON" : ColonTok,
 	"SEMICOLON" : SemiColonTok,
 	"BANG" : BangTok,
+	"INDENT" : IndentTok,
 
 	"POSS" : PossTok,
 
@@ -304,10 +357,17 @@ def advance(tok_class=None):
 	
 	print "\n"
 def parse():
-	parse_expression()
+	parse_expression_result = parse_expression()
+	print parse_expression_result
+	return parse_expression_result
+
+def block():
+	# stmts = []
+	# while 
+	pass
+
 def parse_expression():
 	#put something into global token
-    print "parsing done"
     return expression()
 
 def parse_create(): 
@@ -384,12 +444,9 @@ def main():
 	
 #PARSING
 	
-	print "before the first advance, the token is", token
 	advance() #first advance, to get a token into it
-	print "after the first advance, now there should be a token", token
 	while token.__class__.__name__ != 'EndTok':
 		parse() #parsing goes here	
-		print " after advance() now the current token is", token
 	
 	# advance()
 	# while token.__class__.__name__ != 'EndTok':
@@ -413,6 +470,7 @@ def main():
 
 if __name__ == "__main__":
 	main()
+
 
 
 
