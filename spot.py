@@ -53,6 +53,9 @@ token_names = [
 	
 	'NAME',
 	'INDENT',
+	#'SPACE',
+
+	'CREATE_VAR',
 ]
 
 reserved = {
@@ -72,6 +75,9 @@ reserved = {
 	'function' : 'FUNCTION',
 	'the' : 'THE',
 	'condition' : 'CONDITION',
+	
+
+	#'test the test space' : 'TESTTESTTEST',
 	}
 
 #All tokens
@@ -98,7 +104,19 @@ t_SEMICOLON = r';'
 t_BANG = r'!'
 t_INDENT = r'\t'
 
+#t_SPACE = r'[ ]'
+
 t_POSS = r"'s"
+
+#complex reserved words
+#t_TEST = r'one\stwo'
+
+# A string containing ignored chars
+t_ignore = ' '
+
+def t_CREATE_VAR(t):
+	r'create\snew\svariable'
+	return t
 
 def t_COMMENT(t):
     r'\([^)]*\)' #\( to get '(', [^]* to get any no. of characters inside  
@@ -113,8 +131,6 @@ def t_NAME(t):
 def t_newline(t):
 	r'\n+'
 	t.lexer.lineno += len(t.value)
-# A string containing ignored chars (spaces and tabs)
-t_ignore = ' '
 
 def t_error(t):
 	print "Illegal character '%s' " % t.value[0]
