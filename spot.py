@@ -71,17 +71,18 @@ token_names = [
 	
 	'NAME',
 	'INDENT',
+	'ELSE',
 	'IS_EQUAL_TO',
 	'IF_THE_CONDITION',
 	'CREATE_NEW_VARIABLE',
 	'DEFINE_NEW_FUNCTION',
 	'WHILE_THE_CONDITION',
 	'FOLLOW_THESE_INSTRUCTIONS',
+	'IF_NONE_CONDITION',
 ]
 
 reserved = {
 	'this is' : 'THISIS',
-	'else' : 'ELSE',
 	'while' : 'WHILE',
 	'or' : 'OR',
 	'and' : 'AND',
@@ -104,8 +105,8 @@ t_SUB_OP = r'\-'
 t_MUL_OP = r'\*'
 t_DIV_OP = r'\/'
 
-t_GREATER_THAN_OP = r'<'
-t_LESS_THAN_OP = r'>'
+t_GREATER_THAN_OP = r'>'
+t_LESS_THAN_OP = r'<'
 
 #delimiters
 t_COMMA = r','
@@ -121,6 +122,13 @@ t_RCURLY = r'}'
 t_ignore = ' '
 
 # more complex lexing functions
+def t_IF_NONE_CONDITION(t):
+	r'[Ii]f\snone\sof\sthe\sprevious\sconditions\sare\strue'
+	return t
+def t_ELSE(t):
+	r'[Ee]lse'
+	return t
+
 def t_POSS(t):
 	r'\'(\'s)?'
 	return t
@@ -242,10 +250,7 @@ class ThisIsTok:
 	pass
 class ValueTok:
 	pass
-class TheTok:
-	pass
-class ConditionTok:
-	pass
+
 class TakesTok(Token):
 	pass
 class OrTok(Token):
@@ -255,62 +260,95 @@ class AndTok(Token):
 
 #Statement tokens
 
-class ElseTok:
+class ElseTok(Token):
+	def __init__(self, value = 0):
+		self.value = value
+		self.first = None
+		# self.condition = None
+		# self.true_block = None
+		# self.elseif = None
+
+	# def statementd(self):
+	# 	advance(ElseIfTok)
+	# 	new_condition = statement()
+	# 	self.condition = new_condition
+	# 	advance('CommaTok')
+	# 	advance('FollowTheseInstructionsTok')
+	# 	advance('ColonTok')
+	# 	advance('LCurlyTok')
+	# 	new_block = parse_block()
+	# 	self.true_block = new_block
+	# 	advance('RCurlyTok')
+	# 	if token.__class__.__name__=='ElseIfTok':
+	# 		self.elseif = token.statementd()
+
+	#def __repr__(self):
+		# return "(%s): self.condition = %s, self.true_block = %s, self.elseif = %s" %(self.__class__.__name__, self.condition, self.true_block, self.elseif)
+
+
+class IfNoneConditionTok(Token):
 	pass
 
 class IfTheConditionTok(Token):
-	def statementd():
-		return "hello"
-
-class IfTheConditionNode(Token):
+	"""If the condition x>4 is equal to true, follow these instructions:"""
 	def __init__(self, value = 0):
 		self.value = value
-		self.expression = expression
-		self.block = block
+		self.condition = None
+		self.true_block = None
+		self.else_block = None 
+
+	def statementd(self):
+		advance('IfTheConditionTok')
+		new_condition = statement()
+		self.condition = new_condition
+		advance('CommaTok')
+		advance('FollowTheseInstructionsTok')
+		advance('ColonTok')
+		advance('LCurlyTok')
+		new_block = parse_block()
+		self.true_block = new_block
+		advance('RCurlyTok')
+		while (token.__class__.__name__ != 'IndentTok' and token.__class__.__name__ != 'EndTok'):
+			if token.__class__.__name__ == 'ElseTok':
+				advance()
+				if token.__class__.__name__ == 'IfTheConditionTok':
+					new_if = token
+					new_else_block =new_if.statementd()
+					self.else_block = new_else_block
+				elif token.__class__.__name__ == 'CommaTok':
+					advance('CommaTok')
+					advance('FollowTheseInstructionsTok')
+					advance('ColonTok')
+					advance('LCurlyTok')
+					else_block = parse_block()
+					self.else_block = else_block
+					advance('RCurlyTok')				
+		return self
 
 	def __repr__(self):
-		return "(%s): self.expression = %s, self.block = %s" %(self.__class__.__name__, self.expression, self.block)
+		return "(%s): self.condition = %s, self.true_block = %s, self.else_block = %s " %(self.__class__.__name__, self.condition, self.true_block, self.else_block)
 
 class WhileTheConditionTok(Token):
 	"""While the condition x>4 is equal to true, follow these instructions: {block}"""
+	
 	def __init__(self, value = 0):
 		self.value = value
 		self.condition = None
 		self.block = None
 
 	def statementd(self):
-		print 1, token 
 		advance('WhileTheConditionTok')
-		print 2, token
 		new_condition = statement()
 		self.condition = new_condition
-		print 3, self.condition
 		advance('CommaTok')
-		print 4, token 
 		advance('FollowTheseInstructionsTok')
-		print 5, token
 		advance('ColonTok')
-		print 6, token
 		advance('LCurlyTok')
-		print 7, token
 		new_block = parse_block()
 		self.block = new_block
-		print 8, self.block
 		advance('RCurlyTok')
-		# print 3, self
-		# advance('FollowTheseInstructionsTok')
-		# advance()
-		# # advance('ColonTok')
-		# # advance('LCURLY')
-		# # advance()
-		# # new_block = parse_block()
-		# # self.block = new_block
-		# # print self.block 
-		# print 4, self
-		# print 5, token
-		#return self
-		return self
-		
+		return self		
+	
 	def __repr__(self):
 		return "(%s): self.condition = %s, self.block = %s" %(self.__class__.__name__, self.condition, self.block)
 
@@ -332,6 +370,7 @@ class Create_A_New_VarTok(Token):
 		print 3, token
 		advance() 
 		return self
+
 	def __repr__(self):
 		return "(%s): self.varname = %s" %(self.__class__.__name__, self.varname)
 
@@ -482,6 +521,7 @@ token_map = {
 	"FALSE" : FalseTok,
 	"THISIS" : ThisIsTok,
 	"ELSE" : ElseTok,
+	"IF_NONE_CONDITION" : IfNoneConditionTok,
 	"OR" : OrTok,
 	"AND" : AndTok,
 	"IS" : IsTok,
