@@ -5,6 +5,10 @@
 #separate lexer file from tokenizer/parser (not very important)
 #parse declaration and assignment separately (I'd like this, but it's not super necessary)
 
+#create two classes for is versus equal to 
+#add nud to true/false
+
+#anything that parses as part of an expression needs an lbp
 
 #Shiny bits:
 # Verb conjugations
@@ -20,7 +24,8 @@
 
 
 #--Qs
-
+# line 264: why do i have to advance again so that periodtok doesn't end up in self?
+# scope? 
 
 
 #DONE
@@ -66,6 +71,7 @@ token_names = [
 	
 	'NAME',
 	'INDENT',
+	'IS_EQUAL_TO',
 	'IF_THE_CONDITION',
 	'CREATE_NEW_VARIABLE',
 	'DEFINE_NEW_FUNCTION',
@@ -81,6 +87,8 @@ reserved = {
 	'and' : 'AND',
 	'is' : 'IS',
 	'value' : 'VALUE',
+	'true' : 'TRUE',
+	'false' : 'FALSE',
 	}
 
 # All tokens
@@ -115,6 +123,10 @@ t_ignore = ' '
 # more complex lexing functions
 def t_POSS(t):
 	r'\'(\'s)?'
+	return t
+
+def t_IS_EQUAL_TO(t):
+	r'is\sequal\sto'
 	return t
 
 def t_CREATE_NEW_VARIABLE(t):
@@ -167,29 +179,46 @@ class Token:
 	def __init__(self, value=0):
 		self.value = value
 	def nulld(self):
-		return self
-	def leftd(self):
+		print self 
+		raise SyntaxError("This should not have a nulld")
+	def leftd(self, left):
 		pass
 	def __repr__(self):
 		return "(%s, %r)" %(self.__class__.__name__, self.value)
+
+class LiteralToken(Token):
+	lbp = 10
+	def nulld(self):
+		return self
 
 class BinaryOpToken(Token):
 	def __init__(self, value=0):
 		Token.__init__(self)
 		self.first = None
 		self.second = None
+	
+	def nulld(self):
+		pass
 	def __repr__(self):
 		return "(%s, %r): self.first = %s, self.second = %s" %(self.__class__.__name__, self.value, self.first, self.second)
 
 
-#Primitives
-class IntTok(Token):
+# Primitives
+class IntTok(LiteralToken):
 	pass
-class StringTok(Token):
+class StringTok(LiteralToken):
 	pass
+
+# Booleans
+class TrueTok(LiteralToken):
+	lbp=0
+
+class FalseTok(LiteralToken):
+	lbp=0
 
 #Basic punctuation
 class CommaTok(Token):
+	lbp = 0
 	pass
 class PeriodTok(Token):
 	pass
@@ -201,9 +230,13 @@ class BangTok(Token):
 	pass
 class IndentTok(Token):
 	pass
-class PossTok:
+class PossTok(Token):
 	pass
-
+class LCurlyTok(Token):
+	pass
+class RCurlyTok(Token):
+	lbp = 0
+	pass
 #Syntax
 class ThisIsTok:
 	pass
@@ -226,7 +259,7 @@ class ElseTok:
 	pass
 
 class IfTheConditionTok(Token):
-	def stmtd():
+	def statementd():
 		return "hello"
 
 class IfTheConditionNode(Token):
@@ -237,30 +270,86 @@ class IfTheConditionNode(Token):
 
 	def __repr__(self):
 		return "(%s): self.expression = %s, self.block = %s" %(self.__class__.__name__, self.expression, self.block)
+
 class WhileTheConditionTok(Token):
-	def stmd():
-		advance('COMMA')
-		advance() #move on to the beginning of the expression
-		condition = expression() #parse the expression
-		self.condition = condition #set left fo
-		advance('COMMA')
+	"""While the condition x>4 is equal to true, follow these instructions: {block}"""
+	def __init__(self, value = 0):
+		self.value = value
+		self.condition = None
+		self.block = None
+
+	def statementd(self):
+		print 1, token 
+		advance('WhileTheConditionTok')
+		print 2, token
+		new_condition = statement()
+		self.condition = new_condition
+		print 3, self.condition
+		advance('CommaTok')
+		print 4, token 
 		advance('FollowTheseInstructionsTok')
-		advance('COLON')
-		advance('{')
-		#parse block goes here
+		print 5, token
+		advance('ColonTok')
+		print 6, token
+		advance('LCurlyTok')
+		print 7, token
+		new_block = parse_block()
+		self.block = new_block
+		print 8, self.block
+		advance('RCurlyTok')
+		# print 3, self
+		# advance('FollowTheseInstructionsTok')
+		# advance()
+		# # advance('ColonTok')
+		# # advance('LCURLY')
+		# # advance()
+		# # new_block = parse_block()
+		# # self.block = new_block
+		# # print self.block 
+		# print 4, self
+		# print 5, token
+		#return self
+		return self
+		
+	def __repr__(self):
+		return "(%s): self.condition = %s, self.block = %s" %(self.__class__.__name__, self.condition, self.block)
+
 class Create_A_New_VarTok(Token):
-	pass
-class Create_NewVarNode(Token):
+	"""Create a new variable: x."""
+
 	def __init__(self, value = 0):
 		self.value = value
 		self.varname = None
-		self.varvalue = None
 
+	def statementd(self):
+		advance('ColonTok')
+		print 1, token
+		advance('NameTok')
+		name = token.value
+		print 2, token 
+		self.varname = name
+		advance('PeriodTok')
+		print 3, token
+		advance() 
+		return self
 	def __repr__(self):
-		return "(%s): self.varname = %s, self.varvalue = %s" %(self.__class__.__name__, self.varname, self.varvalue)
+		return "(%s): self.varname = %s" %(self.__class__.__name__, self.varname)
+
 
 class DefineNewFuncTok(Token):
-	pass 
+	"""Define a new function: numapples. Numapples takes 0 arguments and follows these instructions: {Block}"""
+	def __init__(self, value = 0):
+		self.value = value
+		self.function_name = None
+	def statementd(self):
+		advance("ColonTok")
+		advance("NameTok")
+		self.function_name = token.value
+		advance("PeriodTok")
+		advance()
+		return self
+	def __repr__(self):
+		return "(%s): self.function_name = %s" %(self.__class__.__name__, self.function_name)
 
 class FollowTheseInstructionsTok(Token):
 	pass 
@@ -274,12 +363,14 @@ class IsTok(BinaryOpToken):
 		self.first = left
 		self.second = expression(40)
 		return self
-class NameTok(Token):
+class NameTok(LiteralToken):
+	
+	lbp = 10
 	pass
 
 class EndTok(Token):
 	lbp = 0
-	def leftd(self):
+	def leftd(self, left):
 		pass
 	def nulld(self):
 		pass
@@ -289,12 +380,14 @@ class EndTok(Token):
 class BlockTok:
 	def __init__(self, statements):
 		self.statements = statements
-	def stmtd(self):
+	def statementd(self):
 		self.statements = block()
 		return self
 class Program:
-	def stmtd(self):
+	def statementd(self):
 		self.children = statement_list()
+		for selves in self.children:
+			print selves
 		return self
 
 
@@ -347,7 +440,12 @@ class LessThanOpTok(BinaryOpToken):
 		self.first = left
 		self.second = expression(40)
 		return self
-
+class IsEqualToTok(BinaryOpToken):
+	lbp = 40
+	def leftd(self, left):
+		self.first = left
+		self.second = expression(40)
+		return self
 
 # create class token list and token map dict ----------------------------------
 class_tokens = []
@@ -376,14 +474,19 @@ token_map = {
 	"INDENT" : IndentTok,
 
 	"POSS" : PossTok,
+	"LCURLY" : LCurlyTok,
+	"RCURLY" : RCurlyTok,
 
 # reserved words:
+	"TRUE" : TrueTok,
+	"FALSE" : FalseTok,
 	"THISIS" : ThisIsTok,
 	"ELSE" : ElseTok,
 	"OR" : OrTok,
 	"AND" : AndTok,
 	"IS" : IsTok,
 	"VALUE" : ValueTok,
+	"IS_EQUAL_TO" : IsEqualToTok,
 	"CREATE_NEW_VARIABLE" : Create_A_New_VarTok,
 	"DEFINE_NEW_FUNCTION" : DefineNewFuncTok,
 	"IF_THE_CONDITION" : IfTheConditionTok,
@@ -403,89 +506,45 @@ def statement_list():
 		statements.append(statement())	
 	return statements
 
-# def statement():
-# 	if token.__getattribute__('stmtd'):
-# 		return token.stmtd()
-# 	else: 
-# 		return expression(0)
+def parse_block():
+	block_statements = [] #initialize empty block statement list
+	
+	while token.__class__.__name__ != 'RCurlyTok': #while there is no rcurly
+		new_statement = statement()
+		block_statements.append(new_statement)
+	return block_statements
 
-def expression(rbp=0):
-    t = token
-    advance()
-    left = t.nulld()
-    while rbp < token.lbp:
-        t = token
-        advance()
-        left = t.leftd(left) 
-    return left
+def expression(rbp=0):	    
+	    t = token
+	    advance()
+	    left = t.nulld()
+	    while rbp < token.lbp:
+	        t = token
+	        advance()
+	        left = t.leftd(left) 
+	    return left
 
 def advance(tok_class=None):
 	global token
-	token = class_tokens.pop(0) 
+	#check if the current token is the one expected
 	if (tok_class and token.__class__.__name__!=tok_class):
 		raise SyntaxError("Expected %s but got %s" % (tok_class, token.__class__.__name__)) 
-	
+	#if so, move on to the next token
+	token = class_tokens.pop(0)
 	print "\n"
-def next():
-	pass
-
-def block():
-	# stmts = []
-	# while 
-	pass
-
-def parse_expression():
-	#put something into global token
-    return expression()
-
-def parse_create(): 
-	advance('Create_A_New_VarTok') #advance on create - taken out b/c already advancing once
-	advance('ColonTok') #advance on colon
-	advance('NameTok')
-	name_token = token #save name token as name_token
-	create_newvarnode = Create_NewVarNode() #create new create_new_variable node
-	create_newvarnode.varname = name_token.value #save the value of the name token as the varname attribute of Create_NewVarTok 
-	advance('PeriodTok')
-	return create_newvarnode
-
-def parse_function():
-	"""Define a new function: numapples. Numapples takes 0 arguments. Instructions"""
-	advance('DefineANewFuncTok')
-	advance('ColonTok')
-	advance('NameTok')
-	advance('PeriodTok')
-	#check that the name is the same
-	advance('TakesTok')
-	advance('IntTok')
-	advance('FollowTheseInstructionsTok')
-	advance('ColonTok')
-	advance('BlockTok')
-
-def parse_if():
-	""" If the condition, expression: do this."""
-	
-	advance('IfTheConditionTok')
-	new_node = IfTheConditionNode()
-	advance('CommaTok')
-	new_node.expression = parse_expression()
-	advance('COLON')
-
-	advance() #block???
-	#parse_block()
 
 def statement(): # parses one statement
-	# if the token has a stmtd attribute, invoke it
-	if hasattr(token, "stmtd"):
-		return token.stmtd()
+	# if the token has a statementd attribute, invoke it
+	if hasattr(token, "statementd"):
+		return token.statementd()
 	# otherwise, eval as an expression
-	result = expression()
-	print result
-	return result
+	if hasattr(token, "nulld"):
+		return expression(0)
 
 def parse():	
 	advance() #to put the first token in
 	p = Program()
-	p.stmtd()	
+	p.statementd()	
 	return p
 
 def make_class_tokens(source):
@@ -507,7 +566,7 @@ def make_class_tokens(source):
 			break	
 		lex_tokens.append(tok)
 
-	print "these are the lex tokens", lex_tokens
+	print "\n\nthese are the lex tokens", lex_tokens
 
 	#------convert lextokens to class tokens
 	
@@ -521,7 +580,7 @@ def make_class_tokens(source):
 	new_end_tok = EndTok()
 	class_tokens.append(new_end_tok)
 
-	print "these are the class tokens", class_tokens
+	print "\n these are the class tokens", class_tokens
 	return class_tokens
 
 def main():
