@@ -583,27 +583,17 @@ def parse_block():
 	return block_statements
 
 def expression(rbp=0):	    
-	    print "this is the current expression token", token
 	    t = token
 	    advance()
-	    print "now the expression token is", token
 	    left = t.nulld()
-	    print "t.nulld", left 
 	    while rbp < token.lbp:
 	        t = token
 	        advance()
 	        left = t.leftd(left) 
 	    return left
 
-# def check_type(tok_class): #this function might not be necessary...
-# 	if token.__class__.__name__==tok_class:
-# 		return token
-# 	else:
-# 		raise SyntaxError("Expected %s but got %s" % (tok_class, token.__class__.__name__)) 
-
 def advance(tok_class = None):
 	global token
-	print 1, token
 	#check if the current token is the one expected
 	if (tok_class and token.__class__.__name__!=tok_class):
 		raise SyntaxError("Expected %s but got %s" % (tok_class, token.__class__.__name__)) 
@@ -624,7 +614,6 @@ def statement(): # parses one statement
 
 def parse():	
 	advance() #to put the first token in
-	print "this is the first token", token
 	p = Program()
 	p.statementd()	
 	return p
@@ -648,7 +637,9 @@ def make_class_tokens(source):
 			break	
 		lex_tokens.append(tok)
 
-	print "\n\nthese are the lex tokens", lex_tokens
+	print "\n\n\nLEXING"
+	print "-----Here are the lex tokens you ordered!"
+	print lex_tokens
 
 	#------convert lextokens to class tokens
 	
@@ -662,7 +653,9 @@ def make_class_tokens(source):
 	new_end_tok = EndTok()
 	class_tokens.append(new_end_tok)
 
-	print "\n these are the class tokens", class_tokens
+	print "\nTOKENIZING"
+	print"-----These class tokens are steaming hot!"
+	print class_tokens
 	return class_tokens
 
 def main():
@@ -676,10 +669,13 @@ def main():
 	class_tokens = make_class_tokens(source)
 	
 	#parse the program
+	print "\nPARSING" 
+	print "-----Woo! Nothing's broken yet. About to parse now!"
 	program = parse()
-
+	print "\n\nON TO EVALUATION, mateys-------------->"
 	#eval the program
-	print "Here are the results of your eval!", program.eval()
+	print "\n-----Here are the results of your eval!"
+	print program.eval()
 	
 
 if __name__ == "__main__":
