@@ -93,7 +93,7 @@ reserved = {
 tokens = token_names + list(reserved.values())
 
 # Token functions-----
-t_INT = r'[0-9][0-9]*'
+#t_INT = r'[0-9][0-9]*'
 t_STRING = r'"[A-Za-z0-9_]*"'
 
 # math operators
@@ -119,6 +119,11 @@ t_RCURLY = r'}'
 t_ignore = ' '
 
 # more complex lexing functions
+def t_INT(t):
+    r'\d+'
+    t.value = int(t.value)
+    return t
+
 def t_IF_NONE_CONDITION(t):
 	r'[Ii]f\snone\sof\sthe\sprevious\sconditions\sare\strue'
 	return t
@@ -214,7 +219,15 @@ class BinaryOpToken(Token):
 
 # Primitives
 class IntTok(LiteralToken):
-	pass
+
+	lbp = 0
+
+	def nulld(self):
+		return self
+
+	def eval(self):
+		return self.value
+
 class StringTok(LiteralToken):
 	pass
 
@@ -425,7 +438,9 @@ class Program:
 		return self
 	def eval(self):
 		for mini_selves in self.children:
-			mini_selves.eval()
+			return mini_selves.eval()
+
+
 
 # Basic Math classes
 class AddOpTok(BinaryOpToken):
@@ -435,8 +450,11 @@ class AddOpTok(BinaryOpToken):
 		return expression(100)
 	def leftd(self, left):
 		self.first = left
-		self.second = expression(20)
+		self.second = expression(50)
 		return self
+	def eval(self):
+		print "Interpreter added %r and %r" % (self.first, self.second)
+		return self.first.eval() + self.second.eval()
 	
 class SubOpTok(BinaryOpToken):
 	lbp = 50
@@ -445,23 +463,33 @@ class SubOpTok(BinaryOpToken):
 		return -expression(100)
 	def leftd(self, left):
 		self.first = left
-		self.second = expression(20)
+		self.second = expression(50)
 		return self
+	def eval(self):
+		print "Interpreter subtracted %r from %r" %(self.second, self.first)
+		return self.first.eval() - self.second.eval()
 
 class MulOpTok(BinaryOpToken):
-	lbp = 60
+	lbp = 70
 
 	def leftd(self, left):
 		self.first = left
-		self.second = expression(30)
+		self.second = expression(70)
 		return self
+	def eval(self):
+		print "Interpreter multipled %r and %r" % (self.first, self.second)
+		return self.first.eval() * self.second.eval()
+
 
 class DivOpTok(BinaryOpToken):
-	lbp = 60
+	lbp = 70
 	def leftd(self, left):
 		self.first = left
-		self.second = expression(30)
+		self.second = expression(70)
 		return self
+	def eval(self):
+		print "Interpreter divided %r by %r" %(self.first, self.second)
+		return self.first.eval() / self.second.eval()
 
 class GreaterThanOpTok(BinaryOpToken):
 	lbp = 40
@@ -555,9 +583,12 @@ def parse_block():
 	return block_statements
 
 def expression(rbp=0):	    
+	    print "this is the current expression token", token
 	    t = token
 	    advance()
+	    print "now the expression token is", token
 	    left = t.nulld()
+	    print "t.nulld", left 
 	    while rbp < token.lbp:
 	        t = token
 	        advance()
@@ -572,6 +603,7 @@ def expression(rbp=0):
 
 def advance(tok_class = None):
 	global token
+	print 1, token
 	#check if the current token is the one expected
 	if (tok_class and token.__class__.__name__!=tok_class):
 		raise SyntaxError("Expected %s but got %s" % (tok_class, token.__class__.__name__)) 
@@ -592,6 +624,7 @@ def statement(): # parses one statement
 
 def parse():	
 	advance() #to put the first token in
+	print "this is the first token", token
 	p = Program()
 	p.statementd()	
 	return p
@@ -646,8 +679,8 @@ def main():
 	program = parse()
 
 	#eval the program
-	program.eval()
-
+	print "Here are the results of your eval!", program.eval()
+	
 
 if __name__ == "__main__":
 	main()
