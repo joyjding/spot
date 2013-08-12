@@ -25,18 +25,11 @@
 
 
 #--Qs
-# line 264: why do i have to advance again so that periodtok doesn't end up in self?
-# scope? 
+# scope
 
 
-#DONE
-#How to tokenize multiple words? (fairly important) --->Regex
-#Make "ATok" optional (would be pretty fun)
-#if declaration and assignment are handled separately, how does it know how to attach the value to the variable?
-# ---> That's only taken care of in the eval step
-#Capitalization -->regex
 
-
+#########################################
 # TOKENIZER AND PARSER FOR SPOT LANGUAGE
 
 
@@ -427,10 +420,12 @@ class EndTok(Token):
 class Program:
 	def statementd(self):
 		self.children = statement_list()
-		for selves in self.children:
-			print selves
+		for mini_selves in self.children:
+			print mini_selves
 		return self
-
+	def eval(self):
+		for mini_selves in self.children:
+			mini_selves.eval()
 
 # Basic Math classes
 class AddOpTok(BinaryOpToken):
@@ -646,7 +641,12 @@ def main():
 		source = raw_input(">What would you like to parse? ")
 	
 	class_tokens = make_class_tokens(source)
-	parse()
+	
+	#parse the program
+	program = parse()
+
+	#eval the program
+	program.eval()
 
 
 if __name__ == "__main__":
