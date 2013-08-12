@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 #--TODOS
+# - convert integer strings to actual integers
+
 
 #generate class tokens in PLY Lexer (not very important)
 #separate lexer file from tokenizer/parser (not very important)
 #parse declaration and assignment separately (I'd like this, but it's not super necessary)
 
-#create two classes for is versus equal to 
+#create two classes for is versus equal to DO THIS IT IS IMPORTANT
 #add nud to true/false
 
 #anything that parses as part of an expression needs an lbp
@@ -17,7 +19,6 @@
 
 #Add program class
 #Add evaluate while behavior to while token
-# | While | Expression | Block |
 # __doc__ returns the doc string
 #__getattribute__(...)
 #  x.__getattribute__('name') <==> x.name
@@ -73,6 +74,7 @@ token_names = [
 	'INDENT',
 	'ELSE',
 	'IS_EQUAL_TO',
+	'WHICH_TAKES',
 	'IF_THE_CONDITION',
 	'CREATE_NEW_VARIABLE',
 	'DEFINE_NEW_FUNCTION',
@@ -90,6 +92,8 @@ reserved = {
 	'value' : 'VALUE',
 	'true' : 'TRUE',
 	'false' : 'FALSE',
+	'arguments': 'ARGS',
+	'Instructions' : 'INSTRUCTIONS',
 	}
 
 # All tokens
@@ -131,6 +135,10 @@ def t_ELSE(t):
 
 def t_POSS(t):
 	r'\'(\'s)?'
+	return t
+
+def t_WHICH_TAKES(t):
+	r'which\stakes'
 	return t
 
 def t_IS_EQUAL_TO(t):
@@ -178,13 +186,13 @@ def t_error(t):
 
 
 #----------------NOW WE CREATE CLASS TOKENS!-------------------------------------------------------------
-#PLY Lexer. Takes in a string --> lextokens
+# with nulld(), leftd(), statementd() when necessary, to make parsing happen
 #--------------------------------------------------------------------------------------------------------
 
 
 #Most basic token classes
 class Token:
-	def __init__(self, value=0):
+	def __init__(self, value = 0):
 		self.value = value
 	def nulld(self):
 		print self 
@@ -200,7 +208,7 @@ class LiteralToken(Token):
 		return self
 
 class BinaryOpToken(Token):
-	def __init__(self, value=0):
+	def __init__(self, value = 0):
 		Token.__init__(self)
 		self.first = None
 		self.second = None
@@ -219,10 +227,10 @@ class StringTok(LiteralToken):
 
 # Booleans
 class TrueTok(LiteralToken):
-	lbp=0
+	lbp = 0
 
 class FalseTok(LiteralToken):
-	lbp=0
+	lbp = 0
 
 #Basic punctuation
 class CommaTok(Token):
@@ -245,49 +253,91 @@ class LCurlyTok(Token):
 class RCurlyTok(Token):
 	lbp = 0
 	pass
-#Syntax
+
+#Syntax Words and Phrases
 class ThisIsTok:
 	pass
 class ValueTok:
 	pass
-
 class TakesTok(Token):
 	pass
 class OrTok(Token):
 	pass
 class AndTok(Token):
 	pass
+class ElseTok(Token):
+	pass
+class FollowTheseInstructionsTok(Token):
+	pass
+class WhichTakesTok(Token):
+	pass
+class ArgumentsTok(Token):
+	pass
+class InstructionsTok(Token):
+	pass
+
 
 #Statement tokens
+class Create_A_New_VarTok(Token):
+	"""Create a new variable: x."""
 
-class ElseTok(Token):
 	def __init__(self, value = 0):
 		self.value = value
-		self.first = None
-		# self.condition = None
-		# self.true_block = None
-		# self.elseif = None
+		self.varname = None
 
-	# def statementd(self):
-	# 	advance(ElseIfTok)
-	# 	new_condition = statement()
-	# 	self.condition = new_condition
-	# 	advance('CommaTok')
-	# 	advance('FollowTheseInstructionsTok')
-	# 	advance('ColonTok')
-	# 	advance('LCurlyTok')
-	# 	new_block = parse_block()
-	# 	self.true_block = new_block
-	# 	advance('RCurlyTok')
-	# 	if token.__class__.__name__=='ElseIfTok':
-	# 		self.elseif = token.statementd()
+	def statementd(self):
+		advance('Create_A_New_VarTok')
+		advance('ColonTok')
+		name = advance('NameTok') 
+		self.varname = name.value
+		advance('PeriodTok')
+		return self
 
-	#def __repr__(self):
-		# return "(%s): self.condition = %s, self.true_block = %s, self.elseif = %s" %(self.__class__.__name__, self.condition, self.true_block, self.elseif)
+	def __repr__(self):
+		return "(%s): self.varname = %s" %(self.__class__.__name__, self.varname)
 
+class DefineNewFuncTok(Token):
+	"""Define a new function: numapples. Numapples takes 0 arguments and follows these instructions: {Block}"""
+	def __init__(self, value = 0):
+		self.value = value
+		self.function_name = [] #a list so there can be multi-word names
+		self.num_args = 0
+		self.args = []
+		self.block = None
 
-class IfNoneConditionTok(Token):
-	pass
+	def statementd(self):
+		advance("DefineNewFuncTok")
+		#save multiple word names
+		while isinstance(token, NameTok):
+			self.function_name.append(token)
+			advance()
+		#for saving arguments, if there are any
+		if isinstance(token, CommaTok):
+			advance('CommaTok')
+			advance('WhichTakesTok')
+			self.num_args = advance('IntTok')
+			advance('ArgumentsTok')
+			advance('ColonTok')	
+			#for saving multiple arguments
+			while isinstance(token, NameTok):
+				name = advance('NameTok')
+				self.args.append(name)
+				if isinstance(token, PeriodTok):
+					break #break breaks most recent loop
+				advance('CommaTok')	
+			advance('PeriodTok')
+		#instructions
+		advance('InstructionsTok')
+		advance('ColonTok')
+		advance('LCurlyTok')
+		new_block = parse_block()
+		self.block = new_block
+		advance('RCurlyTok')
+		return self
+
+	def __repr__(self):
+		return "(%s): .function_name = %s | .num_args = %s | .args = %s" %(self.__class__.__name__, self.function_name, self.num_args, self.args) 
+
 
 class IfTheConditionTok(Token):
 	"""If the condition x>4 is equal to true, follow these instructions:"""
@@ -352,56 +402,15 @@ class WhileTheConditionTok(Token):
 	def __repr__(self):
 		return "(%s): self.condition = %s, self.block = %s" %(self.__class__.__name__, self.condition, self.block)
 
-class Create_A_New_VarTok(Token):
-	"""Create a new variable: x."""
-
-	def __init__(self, value = 0):
-		self.value = value
-		self.varname = None
-
-	def statementd(self):
-		advance('ColonTok')
-		print 1, token
-		advance('NameTok')
-		name = token.value
-		print 2, token 
-		self.varname = name
-		advance('PeriodTok')
-		print 3, token
-		advance() 
-		return self
-
-	def __repr__(self):
-		return "(%s): self.varname = %s" %(self.__class__.__name__, self.varname)
-
-
-class DefineNewFuncTok(Token):
-	"""Define a new function: numapples. Numapples takes 0 arguments and follows these instructions: {Block}"""
-	def __init__(self, value = 0):
-		self.value = value
-		self.function_name = None
-	def statementd(self):
-		advance("ColonTok")
-		advance("NameTok")
-		self.function_name = token.value
-		advance("PeriodTok")
-		advance()
-		return self
-	def __repr__(self):
-		return "(%s): self.function_name = %s" %(self.__class__.__name__, self.function_name)
-
-class FollowTheseInstructionsTok(Token):
-	pass 
 
 # Misc tokens
-
 class IsTok(BinaryOpToken):
-	#serves the same function as ==
 	lbp = 40
 	def leftd(self, left):
 		self.first = left
 		self.second = expression(40)
 		return self
+
 class NameTok(LiteralToken):
 	
 	lbp = 10
@@ -415,13 +424,6 @@ class EndTok(Token):
 		pass
 
 #parsing classes
-
-class BlockTok:
-	def __init__(self, statements):
-		self.statements = statements
-	def statementd(self):
-		self.statements = block()
-		return self
 class Program:
 	def statementd(self):
 		self.children = statement_list()
@@ -521,12 +523,16 @@ token_map = {
 	"FALSE" : FalseTok,
 	"THISIS" : ThisIsTok,
 	"ELSE" : ElseTok,
-	"IF_NONE_CONDITION" : IfNoneConditionTok,
 	"OR" : OrTok,
 	"AND" : AndTok,
 	"IS" : IsTok,
 	"VALUE" : ValueTok,
+	"ARGS" : ArgumentsTok,
+	"INSTRUCTIONS" : InstructionsTok,
+
+	#reserved phrases:
 	"IS_EQUAL_TO" : IsEqualToTok,
+	"WHICH_TAKES" : WhichTakesTok,
 	"CREATE_NEW_VARIABLE" : Create_A_New_VarTok,
 	"DEFINE_NEW_FUNCTION" : DefineNewFuncTok,
 	"IF_THE_CONDITION" : IfTheConditionTok,
@@ -534,10 +540,9 @@ token_map = {
 	"FOLLOW_THESE_INSTRUCTIONS" : FollowTheseInstructionsTok,
 }
 
-#####################################################################################################
-# PARSER
-# Top Down Precedence Parsing
-###################################################################################################		
+#----------------FUNCTIONS!-------------------------------------------------------------
+# 
+#--------------------------------------------------------------------------------------------------------	
 
 def statement_list():
 	statements = []
@@ -564,14 +569,23 @@ def expression(rbp=0):
 	        left = t.leftd(left) 
 	    return left
 
-def advance(tok_class=None):
+# def check_type(tok_class): #this function might not be necessary...
+# 	if token.__class__.__name__==tok_class:
+# 		return token
+# 	else:
+# 		raise SyntaxError("Expected %s but got %s" % (tok_class, token.__class__.__name__)) 
+
+def advance(tok_class = None):
 	global token
 	#check if the current token is the one expected
 	if (tok_class and token.__class__.__name__!=tok_class):
 		raise SyntaxError("Expected %s but got %s" % (tok_class, token.__class__.__name__)) 
+	
+	current_token = token	
+
 	#if so, move on to the next token
 	token = class_tokens.pop(0)
-	print "\n"
+	return current_token
 
 def statement(): # parses one statement
 	# if the token has a statementd attribute, invoke it
