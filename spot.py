@@ -497,6 +497,11 @@ class GreaterThanOpTok(BinaryOpToken):
 		self.first = left
 		self.second = expression(40)
 		return self
+	def eval(self):
+		if self.first.eval() > self.second.eval():
+			return True
+		else:
+			return False
 
 class LessThanOpTok(BinaryOpToken):
 	lbp = 40
@@ -504,12 +509,22 @@ class LessThanOpTok(BinaryOpToken):
 		self.first = left
 		self.second = expression(40)
 		return self
+	def eval(self):
+		if self.first.eval() < self.second.eval():
+			return True
+		else: 
+			return False
 class IsEqualToTok(BinaryOpToken):
 	lbp = 40
 	def leftd(self, left):
 		self.first = left
 		self.second = expression(40)
 		return self
+	def eval(self):
+		if self.first.eval() == self.second.eval():
+			return True
+		else:
+			return False
 
 # create class token list and token map dict ----------------------------------
 class_tokens = []
