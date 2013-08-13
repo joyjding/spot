@@ -106,7 +106,7 @@ tokens = token_names + list(reserved.values())
 
 # Token functions-----
 #t_INT = r'[0-9][0-9]*'
-t_STRING = r'"[A-Za-z0-9_]*"'
+t_STRING = r'"[A-Za-z0-9_\s]*"'
 
 # math operators
 t_ADD_OP = r'\+'
@@ -321,11 +321,11 @@ class Create_A_New_VarTok(Token):
 		self.varname = None
 
 	def statementd(self):
-		advance('Create_A_New_VarTok')
-		advance('ColonTok')
-		name = advance('NameTok') 
+		advance(Create_A_New_VarTok)
+		advance(ColonTok)
+		name = advance(NameTok) 
 		self.varname = name.value
-		advance('PeriodTok')
+		advance(PeriodTok)
 		return self
 
 	def __repr__(self):
@@ -339,20 +339,20 @@ class SetTok(Token):
 
 	def statementd(self):
 		print 1, token
-		advance('SetTok')
+		advance(SetTok)
 		#save name 
-		new_varname = advance('NameTok')
+		new_varname = advance(NameTok)
 		self.varname = new_varname.value
 		print 2, self.varname
-		advance('PossTok')
-		advance('ValueTok')
-		advance('ToTok')
+		advance(PossTok)
+		advance(ValueTok)
+		advance(ToTok)
 		print token, 3
 		if not (isinstance(token, IntTok) or isinstance(token, StringTok) or isinstance(token, NameTok)):
 			raise SyntaxError ("Expected a value for the variable %s, but got incompatible type") %self.varname
 		new_varvalue = advance()
 		self.varvalue = new_varvalue
-		advance('PeriodTok')
+		advance(PeriodTok)
 		return self
 	def __repr__(self):
 		return "(%s): .varname = %s | .varvalue = %s " %(self.__class__.__name__, self.varname, self.varvalue)
@@ -367,33 +367,33 @@ class DefineNewFuncTok(Token):
 		self.block = None
 
 	def statementd(self):
-		advance("DefineNewFuncTok")
+		advance(DefineNewFuncTok)
 		#save multiple word names
 		while isinstance(token, NameTok):
 			self.function_name.append(token)
 			advance()
 		#for saving arguments, if there are any
 		if isinstance(token, CommaTok):
-			advance('CommaTok')
-			advance('WhichTakesTok')
-			self.num_args = advance('IntTok')
-			advance('ArgumentsTok')
-			advance('ColonTok')	
+			advance(CommaTok)
+			advance(WhichTakesTok)
+			self.num_args = advance(IntTok)
+			advance(ArgumentsTok)
+			advance(ColonTok)	
 			#for saving multiple arguments
 			while isinstance(token, NameTok):
-				name = advance('NameTok')
+				name = advance(NameTok)
 				self.args.append(name)
 				if isinstance(token, PeriodTok):
 					break #break breaks most recent loop
-				advance('CommaTok')	
-			advance('PeriodTok')
+				advance(CommaTok)	
+			advance(PeriodTok)
 		#instructions
-		advance('InstructionsTok')
-		advance('ColonTok')
-		advance('LCurlyTok')
+		advance(InstructionsTok)
+		advance(ColonTok)
+		advance(LCurlyTok)
 		new_block = parse_block()
 		self.block = new_block
-		advance('RCurlyTok')
+		advance(RCurlyTok)
 		return self
 
 	def __repr__(self):
@@ -409,31 +409,31 @@ class IfTheConditionTok(Token):
 		self.else_block = None 
 
 	def statementd(self):
-		advance('IfTheConditionTok')
+		advance(IfTheConditionTok)
 		new_condition = statement()
 		self.condition = new_condition
-		advance('CommaTok')
-		advance('FollowTheseInstructionsTok')
-		advance('ColonTok')
-		advance('LCurlyTok')
+		advance(CommaTok)
+		advance(FollowTheseInstructionsTok)
+		advance(ColonTok)
+		advance(LCurlyTok)
 		new_block = parse_block()
 		self.true_block = new_block
-		advance('RCurlyTok')
-		while (token.__class__.__name__ != 'IndentTok' and token.__class__.__name__ != 'EndTok'):
-			if token.__class__.__name__ == 'ElseTok':
+		advance(RCurlyTok)
+		while (not isinstance(token, IndentTok) and not isinstance(token, EndTok)):
+			if isinstance(token, ElseTok):
 				advance()
-				if token.__class__.__name__ == 'IfTheConditionTok':
+				if isinstance(token, IfTheConditionTok):
 					new_if = token
 					new_else_block =new_if.statementd()
 					self.else_block = new_else_block
-				elif token.__class__.__name__ == 'CommaTok':
-					advance('CommaTok')
-					advance('FollowTheseInstructionsTok')
-					advance('ColonTok')
-					advance('LCurlyTok')
+				elif isinstance(token, CommaTok):
+					advance(CommaTok)
+					advance(FollowTheseInstructionsTok)
+					advance(ColonTok)
+					advance(LCurlyTok)
 					else_block = parse_block()
 					self.else_block = else_block
-					advance('RCurlyTok')				
+					advance(RCurlyTok)				
 		return self
 
 	def __repr__(self):
@@ -448,16 +448,16 @@ class WhileTheConditionTok(Token):
 		self.block = None
 
 	def statementd(self):
-		advance('WhileTheConditionTok')
+		advance(WhileTheConditionTok)
 		new_condition = statement()
 		self.condition = new_condition
-		advance('CommaTok')
-		advance('FollowTheseInstructionsTok')
-		advance('ColonTok')
-		advance('LCurlyTok')
+		advance(CommaTok)
+		advance(FollowTheseInstructionsTok)
+		advance(ColonTok)
+		advance(LCurlyTok)
 		new_block = parse_block()
 		self.block = new_block
-		advance('RCurlyTok')
+		advance(RCurlyTok)
 		return self		
 	
 	def __repr__(self):
@@ -469,18 +469,36 @@ class ScreenSayTok(Token):
 		self.value = value
 		self.string = []
 	def statementd(self):
-		advance('ScreenSayTok')
-		advance('ColonTok')
-		advance('DoubleQTok')
-		while not isinstance(token, DoubleQTok):
-			new_bit = advance() #could be lots of dif things
-			new_string_bit = str(new_bit.value)
-			self.string.append(new_string_bit)
-			print self.string
-		advance('DoubleQTok')
+		#advance on screensaytok
+		#advance on colontok
+		#advance on doubleqtok
+		#save string
+		#lex and parse string
+		#turn all those into a string
+		print 1, token
+		advance(ScreenSayTok)
+		print 2, token
+		advance(ColonTok)
+		print 3, token
+		#while not isinstance(token, DoubleQTok):
+			#will work on eval of expressions inside later
+			# if isinstance(token, LCurlyTok):
+			# 	print 1, token
+			# 	advance(LCurlyTok)
+			# 	print 2, token
+			# 	new_block = parse_block()
+			# 	print 3, new_block
+			# 	new_block_string = str(new_block)
+			# 	self.string.append(new_block_string)
+			# 	print self.string
+			# 	advance(RCurlyTok)
+		new_stringtok = advance(StringTok) #could be lots of dif things
+		print new_stringtok
+		new_string = str(new_stringtok.value)
+		self.string.append(new_string)
 		return self
 	def eval(self):
-		print " ".join(self.string)
+		print " ".join(self.string) #that's it??
 
 # Misc tokens
 class IsTok(BinaryOpToken):
@@ -490,7 +508,7 @@ class IsTok(BinaryOpToken):
 		self.second = expression(40)
 		return self
 
-class NameTok(LiteralToken):
+class NameTok(LiteralToken): 
 	
 	lbp = 10
 	pass
@@ -693,7 +711,7 @@ def expression(rbp=0):
 def advance(tok_class = None):
 	global token
 	#check if the current token is the one expected
-	if (tok_class and token.__class__.__name__!=tok_class):
+	if (tok_class and not isinstance(token, tok_class)):
 		raise SyntaxError("Expected %s but got %s" % (tok_class, token.__class__.__name__)) 
 	
 	current_token = token	
