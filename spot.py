@@ -146,7 +146,7 @@ def t_ELSE(t):
 	return t
 
 def t_POSS(t):
-	r'\'(\'s)?'
+	r'\'(s)?'
 	return t
 
 def t_WHICH_TAKES(t):
@@ -328,6 +328,11 @@ class Create_A_New_VarTok(Token):
 		advance(PeriodTok)
 		return self
 
+	def eval(self):
+		#create a new variable in the scope dictionary
+		scope.dict[self.varname] = None
+		print "added %r to scope.dict" %self.varname
+
 	def __repr__(self):
 		return "(%s): self.varname = %s" %(self.__class__.__name__, self.varname)
 
@@ -338,22 +343,26 @@ class SetTok(Token):
 		self.varvalue = None
 
 	def statementd(self):
-		print 1, token
 		advance(SetTok)
 		#save name 
 		new_varname = advance(NameTok)
 		self.varname = new_varname.value
-		print 2, self.varname
 		advance(PossTok)
 		advance(ValueTok)
 		advance(ToTok)
-		print token, 3
 		if not (isinstance(token, IntTok) or isinstance(token, StringTok) or isinstance(token, NameTok)):
 			raise SyntaxError ("Expected a value for the variable %s, but got incompatible type") %self.varname
 		new_varvalue = advance()
-		self.varvalue = new_varvalue
+		self.varvalue = new_varvalue.value
 		advance(PeriodTok)
 		return self
+	
+	def eval(self):
+		if scope.dict.has_key(self.varname) == False:
+			raise SyntaxError("Variable %s doesn't exist" %self.varname)
+		scope.define(self.varname, self.varvalue)
+		print "set scope.dict[%r]: %r" %(self.varname, self.varvalue)
+		
 	def __repr__(self):
 		return "(%s): .varname = %s | .varvalue = %s " %(self.__class__.__name__, self.varname, self.varvalue)
 
@@ -475,11 +484,8 @@ class ScreenSayTok(Token):
 		#save string
 		#lex and parse string
 		#turn all those into a string
-		print 1, token
 		advance(ScreenSayTok)
-		print 2, token
 		advance(ColonTok)
-		print 3, token
 		#while not isinstance(token, DoubleQTok):
 			#will work on eval of expressions inside later
 			# if isinstance(token, LCurlyTok):
@@ -498,7 +504,7 @@ class ScreenSayTok(Token):
 		self.string.append(new_string)
 		return self
 	def eval(self):
-		print " ".join(self.string) #that's it??
+		print " ".join(self.string)
 
 # Misc tokens
 class IsTok(BinaryOpToken):
@@ -509,7 +515,6 @@ class IsTok(BinaryOpToken):
 		return self
 
 class NameTok(LiteralToken): 
-	
 	lbp = 10
 	pass
 
@@ -531,8 +536,15 @@ class Program:
 		for mini_selves in self.children:
 			mini_selves.eval()
 
-
-
+#eval classes
+class Scope:
+	def __init__(self):
+		self.dict = {}
+		self.parent = None
+	def define(self, varkey, varvalue = None):
+		self.dict[varkey] = varvalue
+	def find(self, varkey):
+		return self.dict.get(varkey)
 
 # Basic Math classes
 class AddOpTok(BinaryOpToken):
@@ -729,6 +741,9 @@ def statement(): # parses one statement
 		return expression(0)
 
 def parse():	
+	#create a new global scope -->later use nested scopes
+	scope = Scope()
+	global scope
 	advance() #to put the first token in
 	p = Program()
 	p.statementd()	
