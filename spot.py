@@ -43,9 +43,12 @@ token = None
 
 # List of token names
 token_names = [
+	
+	#primitives
 	'INT',
 	'STRING',
 
+	#math
 	'ADD_OP',
 	'SUB_OP',
 	'MUL_OP',
@@ -53,6 +56,7 @@ token_names = [
 	'GREATER_THAN_OP',
 	'LESS_THAN_OP',
 	
+	#punctuation
 	'COMMA',
 	'PERIOD',
 	'COLON',
@@ -60,12 +64,15 @@ token_names = [
 	'BANG',
 	'LCURLY',
 	'RCURLY',
+	'SINGLEQ',
+	'DOUBLEQ',
 	
 	'POSS',
 	
 	'NAME',
 	'INDENT',
 	'ELSE',
+	'SET',
 	'IS_EQUAL_TO',
 	'WHICH_TAKES',
 	'IF_THE_CONDITION',
@@ -74,6 +81,7 @@ token_names = [
 	'WHILE_THE_CONDITION',
 	'FOLLOW_THESE_INSTRUCTIONS',
 	'IF_NONE_CONDITION',
+	'SET_VALUE_TO',
 ]
 
 reserved = {
@@ -82,11 +90,15 @@ reserved = {
 	'or' : 'OR',
 	'and' : 'AND',
 	'is' : 'IS',
+	'to' : 'TO',
 	'value' : 'VALUE',
 	'true' : 'TRUE',
 	'false' : 'FALSE',
 	'arguments': 'ARGS',
 	'Instructions' : 'INSTRUCTIONS',
+
+	#inbuilt methods
+	'Screensay' : 'SCREENSAY',
 	}
 
 # All tokens
@@ -114,6 +126,8 @@ t_BANG = r'!'
 t_INDENT = r'\t'
 t_LCURLY = r'{'
 t_RCURLY = r'}'
+t_SINGLEQ = r'\''
+t_DOUBLEQ = r'\"'
 
 # A string containing ignored chars
 t_ignore = ' '
@@ -141,6 +155,10 @@ def t_WHICH_TAKES(t):
 
 def t_IS_EQUAL_TO(t):
 	r'is\sequal\sto'
+	return t
+
+def t_SET(t):
+	r'[Ss]et'
 	return t
 
 def t_CREATE_NEW_VARIABLE(t):
@@ -219,7 +237,6 @@ class BinaryOpToken(Token):
 
 # Primitives
 class IntTok(LiteralToken):
-
 	lbp = 0
 
 	def nulld(self):
@@ -227,16 +244,22 @@ class IntTok(LiteralToken):
 
 	def eval(self):
 		return self.value
-
 class StringTok(LiteralToken):
-	pass
+	def eval(self):
+		return self.value
 
 # Booleans
 class TrueTok(LiteralToken):
 	lbp = 0
 
+	def eval(self):
+		return True
+
 class FalseTok(LiteralToken):
 	lbp = 0
+
+	def eval(self):
+		return False
 
 #Basic punctuation
 class CommaTok(Token):
@@ -259,17 +282,23 @@ class LCurlyTok(Token):
 class RCurlyTok(Token):
 	lbp = 0
 	pass
+class SingleQTok(Token):
+	pass
+class DoubleQTok(Token):
+	pass
 
 #Syntax Words and Phrases
 class ThisIsTok:
 	pass
-class ValueTok:
+class ValueTok(Token):
 	pass
 class TakesTok(Token):
 	pass
 class OrTok(Token):
 	pass
 class AndTok(Token):
+	pass
+class ToTok(Token):
 	pass
 class ElseTok(Token):
 	pass
@@ -301,6 +330,32 @@ class Create_A_New_VarTok(Token):
 
 	def __repr__(self):
 		return "(%s): self.varname = %s" %(self.__class__.__name__, self.varname)
+
+class SetTok(Token):
+	def __init__(self, value = 0):
+		self.value = value
+		self.varname = None
+		self.varvalue = None
+
+	def statementd(self):
+		print 1, token
+		advance('SetTok')
+		#save name 
+		new_varname = advance('NameTok')
+		self.varname = new_varname.value
+		print 2, self.varname
+		advance('PossTok')
+		advance('ValueTok')
+		advance('ToTok')
+		print token, 3
+		if not (isinstance(token, IntTok) or isinstance(token, StringTok) or isinstance(token, NameTok)):
+			raise SyntaxError ("Expected a value for the variable %s, but got incompatible type") %self.varname
+		new_varvalue = advance()
+		self.varvalue = new_varvalue
+		advance('PeriodTok')
+		return self
+	def __repr__(self):
+		return "(%s): .varname = %s | .varvalue = %s " %(self.__class__.__name__, self.varname, self.varvalue)
 
 class DefineNewFuncTok(Token):
 	"""Define a new function: numapples. Numapples takes 0 arguments and follows these instructions: {Block}"""
@@ -408,6 +463,24 @@ class WhileTheConditionTok(Token):
 	def __repr__(self):
 		return "(%s): self.condition = %s, self.block = %s" %(self.__class__.__name__, self.condition, self.block)
 
+#inbuilt methods
+class ScreenSayTok(Token):
+	def __init__(self, value = 0):
+		self.value = value
+		self.string = []
+	def statementd(self):
+		advance('ScreenSayTok')
+		advance('ColonTok')
+		advance('DoubleQTok')
+		while not isinstance(token, DoubleQTok):
+			new_bit = advance() #could be lots of dif things
+			new_string_bit = str(new_bit.value)
+			self.string.append(new_string_bit)
+			print self.string
+		advance('DoubleQTok')
+		return self
+	def eval(self):
+		print " ".join(self.string)
 
 # Misc tokens
 class IsTok(BinaryOpToken):
@@ -438,7 +511,8 @@ class Program:
 		return self
 	def eval(self):
 		for mini_selves in self.children:
-			return mini_selves.eval()
+			mini_selves.eval()
+
 
 
 
@@ -551,10 +625,13 @@ token_map = {
 	"SEMICOLON" : SemiColonTok,
 	"BANG" : BangTok,
 	"INDENT" : IndentTok,
-
-	"POSS" : PossTok,
 	"LCURLY" : LCurlyTok,
 	"RCURLY" : RCurlyTok,
+	"SINGLEQ" : SingleQTok,
+	"DOUBLEQ" : DoubleQTok,
+
+	"POSS" : PossTok,
+
 
 # reserved words:
 	"TRUE" : TrueTok,
@@ -564,11 +641,14 @@ token_map = {
 	"OR" : OrTok,
 	"AND" : AndTok,
 	"IS" : IsTok,
+	"TO" : ToTok,
 	"VALUE" : ValueTok,
 	"ARGS" : ArgumentsTok,
 	"INSTRUCTIONS" : InstructionsTok,
 
+
 	#reserved phrases:
+	"SET" : SetTok,
 	"IS_EQUAL_TO" : IsEqualToTok,
 	"WHICH_TAKES" : WhichTakesTok,
 	"CREATE_NEW_VARIABLE" : Create_A_New_VarTok,
@@ -576,6 +656,9 @@ token_map = {
 	"IF_THE_CONDITION" : IfTheConditionTok,
 	"WHILE_THE_CONDITION" : WhileTheConditionTok,
 	"FOLLOW_THESE_INSTRUCTIONS" : FollowTheseInstructionsTok,
+
+	#native methods:
+	"SCREENSAY" : ScreenSayTok,
 }
 
 #----------------FUNCTIONS!-------------------------------------------------------------
