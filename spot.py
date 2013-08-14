@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 #--TODOS
 # - convert integer strings to actual integers
 
@@ -36,7 +35,6 @@
 
 import sys
 import ply.lex as lex #import ply library
-import re
 token = None
 
 #----------------NOW WE LEX -----------------------------------------------------------------------------
@@ -46,7 +44,6 @@ token = None
 # List of token names
 token_names = [
 	
-	'FRUIT',
 	#primitives
 	'INT',
 	'STRING',
@@ -109,7 +106,6 @@ tokens = token_names + list(reserved.values())
 
 # Token functions-----
 #t_INT = r'[0-9][0-9]*'
-t_FRUIT = r'果'
 t_STRING = r'"[A-Za-z0-9_\s]*"'
 
 # math operators
@@ -238,9 +234,6 @@ class BinaryOpToken(Token):
 	def __repr__(self):
 		return "(%s, %r): self.first = %s, self.second = %s" %(self.__class__.__name__, self.value, self.first, self.second)
 
-
-class FruitTok(Token):
-	pass
 
 # Primitives
 class IntTok(LiteralToken):
@@ -503,9 +496,6 @@ class WhileTheConditionTok(Token):
 		while self.condition.eval() == True:
 			for statement in self.block:
 				statement.eval() 
-	def gen(self):
-		MOV 
-
 	def __repr__(self):
 		return "(%s): self.condition = %s, self.block = %s" %(self.__class__.__name__, self.condition, self.block)
 
@@ -513,32 +503,19 @@ class WhileTheConditionTok(Token):
 class ScreenSayTok(Token):
 	def __init__(self, value = 0):
 		self.value = value
-		self.string = []
+		self.pre_string = None
 	def statementd(self):
-		#advance on screensaytok
-		#advance on colontok
-		#advance on doubleqtok
-		#save string
-		#lex and parse string
-		#turn all those into a string
 		advance(ScreenSayTok)
 		advance(ColonTok)
-		#while not isinstance(token, DoubleQTok):
-			#will work on eval of expressions inside later
-			# if isinstance(token, LCurlyTok):
-			# 	print 1, token
-			# 	advance(LCurlyTok)
-			# 	print 2, token
-			# 	new_block = parse_block()
-			# 	print 3, new_block
-			# 	new_block_string = str(new_block)
-			# 	self.string.append(new_block_string)
-			# 	print self.string
-			# 	advance(RCurlyTok)
+		#first string processing
 		new_stringtok = advance(StringTok) #could be lots of dif things
-		print new_stringtok
 		new_string = str(new_stringtok.value)
-		self.string.append(new_string)
+		self.pre_string = new_string
+		#second string processing
+		#call the lexer on this string
+
+		print screensay_tokens
+
 		return self
 	def eval(self):
 		print " ".join(self.string)
@@ -663,7 +640,6 @@ class IsEqualToTok(BinaryOpToken):
 class_tokens = []
 
 token_map = {
-	"FRUIT" : FruitTok,
 	"NAME" : NameTok,
 	"INT" : IntTok,
 	"STRING" : StringTok,
@@ -778,15 +754,14 @@ def parse():
 	p.statementd()	
 	return p
 
-def make_class_tokens(source):
-	
+def make_lex_tokens(source):
 	#-------turn a string into lextokens
 
 	# build the lexer
-	spotlexer = lex.lex(reflags=re.UNICODE)
+	spotlexer = lex.lex()
 	
 	# Lex the data
-	spotlexer.input(source.normalize('NFKC',s))
+	spotlexer.input(source)
 	#Lexer returns LexToken, with attributes: tok.type, tok.value, tok.lineno, tok.lexpos
 	
 	# create lex_tokens list
@@ -800,10 +775,13 @@ def make_class_tokens(source):
 	print "\n\n\nLEXING"
 	print "-----Here are the lex tokens you ordered!"
 	print lex_tokens
+	return lex_tokens
 
+def make_class_tokens(lex_token_list):
+	
 	#------convert lextokens to class tokens
 	
-	for lex_token in lex_tokens:
+	for lex_token in lex_token_list:
 		
 		ltype = lex_token.type 
 		lvalue = lex_token.value
@@ -826,13 +804,20 @@ def main():
 	else:
 		source = raw_input(">What would you like to parse? ")
 	
-	class_tokens = make_class_tokens(source)
+	lex_tokens = make_lex_tokens(source)
+
+	
+	class_tokens = make_class_tokens(lex_tokens)
+	print "\n\n\nLEXING"
+	print "-----Here are the lex tokens you ordered!"
+	print lex_tokens
 	
 	#parse the program
 	print "\nPARSING" 
 	print "-----Woo! Nothing's broken yet. About to parse now!"
 	program = parse()
 	print "\n\nON TO EVALUATION, mateys-------------->"
+	
 	#eval the program
 	print "\n-----Here are the results of your eval!"
 	print program.eval()
