@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #--TODOS
 # - convert integer strings to actual integers
 
@@ -35,6 +36,7 @@
 
 import sys
 import ply.lex as lex #import ply library
+import re
 token = None
 
 #----------------NOW WE LEX -----------------------------------------------------------------------------
@@ -44,6 +46,7 @@ token = None
 # List of token names
 token_names = [
 	
+	'FRUIT',
 	#primitives
 	'INT',
 	'STRING',
@@ -106,6 +109,7 @@ tokens = token_names + list(reserved.values())
 
 # Token functions-----
 #t_INT = r'[0-9][0-9]*'
+t_FRUIT = r'果'
 t_STRING = r'"[A-Za-z0-9_\s]*"'
 
 # math operators
@@ -235,6 +239,9 @@ class BinaryOpToken(Token):
 		return "(%s, %r): self.first = %s, self.second = %s" %(self.__class__.__name__, self.value, self.first, self.second)
 
 
+class FruitTok(Token):
+	pass
+
 # Primitives
 class IntTok(LiteralToken):
 	lbp = 0
@@ -268,7 +275,7 @@ class CommaTok(Token):
 class PeriodTok(Token):
 	pass
 class ColonTok (Token):
-	pass
+	lbp = 0
 class SemiColonTok(Token):
 	pass
 class BangTok(Token):
@@ -405,12 +412,24 @@ class DefineNewFuncTok(Token):
 		advance(RCurlyTok)
 		return self
 
+	def eval(self):
+		pass
+		# f_name = self.function_name
+		# if self.num_args == 0:
+		# 	def f_name():
+			#don't do this yet. go do eval for the other pieces of a function.	
+
+		#create the function
+		#put it in the scope dictionary??
 	def __repr__(self):
 		return "(%s): .function_name = %s | .num_args = %s | .args = %s" %(self.__class__.__name__, self.function_name, self.num_args, self.args) 
 
 
 class IfTheConditionTok(Token):
-	"""If the condition x>4 is equal to true, follow these instructions:"""
+	"""If the condition x>4 is equal to true, follow these instructions:{}. 
+	Else if the condition x<4 is equal to true, follow these instructions:{}. 
+	Else, follow these instructions: {}."""
+
 	def __init__(self, value = 0):
 		self.value = value
 		self.condition = None
@@ -428,9 +447,10 @@ class IfTheConditionTok(Token):
 		new_block = parse_block()
 		self.true_block = new_block
 		advance(RCurlyTok)
+		advance(PeriodTok) 
 		while (not isinstance(token, IndentTok) and not isinstance(token, EndTok)):
 			if isinstance(token, ElseTok):
-				advance()
+				advance(ElseTok)
 				if isinstance(token, IfTheConditionTok):
 					new_if = token
 					new_else_block =new_if.statementd()
@@ -442,8 +462,17 @@ class IfTheConditionTok(Token):
 					advance(LCurlyTok)
 					else_block = parse_block()
 					self.else_block = else_block
-					advance(RCurlyTok)				
+					advance(RCurlyTok)
+					advance(PeriodTok)				
 		return self
+
+	def eval(self):	
+		if self.condition.eval() == True:
+			for statement in self.true_block:
+				statement.eval()
+		else:
+			for statement in self.else_block:
+				statement.eval()
 
 	def __repr__(self):
 		return "(%s): self.condition = %s, self.true_block = %s, self.else_block = %s " %(self.__class__.__name__, self.condition, self.true_block, self.else_block)
@@ -467,8 +496,16 @@ class WhileTheConditionTok(Token):
 		new_block = parse_block()
 		self.block = new_block
 		advance(RCurlyTok)
+		advance(PeriodTok)
 		return self		
 	
+	def eval(self):
+		while self.condition.eval() == True:
+			for statement in self.block:
+				statement.eval() 
+	def gen(self):
+		MOV 
+
 	def __repr__(self):
 		return "(%s): self.condition = %s, self.block = %s" %(self.__class__.__name__, self.condition, self.block)
 
@@ -505,14 +542,6 @@ class ScreenSayTok(Token):
 		return self
 	def eval(self):
 		print " ".join(self.string)
-
-# Misc tokens
-class IsTok(BinaryOpToken):
-	lbp = 40
-	def leftd(self, left):
-		self.first = left
-		self.second = expression(40)
-		return self
 
 class NameTok(LiteralToken): 
 	lbp = 10
@@ -634,6 +663,7 @@ class IsEqualToTok(BinaryOpToken):
 class_tokens = []
 
 token_map = {
+	"FRUIT" : FruitTok,
 	"NAME" : NameTok,
 	"INT" : IntTok,
 	"STRING" : StringTok,
@@ -670,7 +700,6 @@ token_map = {
 	"ELSE" : ElseTok,
 	"OR" : OrTok,
 	"AND" : AndTok,
-	"IS" : IsTok,
 	"TO" : ToTok,
 	"VALUE" : ValueTok,
 	"ARGS" : ArgumentsTok,
@@ -754,10 +783,10 @@ def make_class_tokens(source):
 	#-------turn a string into lextokens
 
 	# build the lexer
-	spotlexer = lex.lex()
+	spotlexer = lex.lex(reflags=re.UNICODE)
 	
 	# Lex the data
-	spotlexer.input(source)
+	spotlexer.input(source.normalize('NFKC',s))
 	#Lexer returns LexToken, with attributes: tok.type, tok.value, tok.lineno, tok.lexpos
 	
 	# create lex_tokens list
