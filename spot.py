@@ -478,26 +478,8 @@ class ScreenSayTok(Token):
 		self.value = value
 		self.string = []
 	def statementd(self):
-		#advance on screensaytok
-		#advance on colontok
-		#advance on doubleqtok
-		#save string
-		#lex and parse string
-		#turn all those into a string
 		advance(ScreenSayTok)
 		advance(ColonTok)
-		#while not isinstance(token, DoubleQTok):
-			#will work on eval of expressions inside later
-			# if isinstance(token, LCurlyTok):
-			# 	print 1, token
-			# 	advance(LCurlyTok)
-			# 	print 2, token
-			# 	new_block = parse_block()
-			# 	print 3, new_block
-			# 	new_block_string = str(new_block)
-			# 	self.string.append(new_block_string)
-			# 	print self.string
-			# 	advance(RCurlyTok)
 		new_stringtok = advance(StringTok) #could be lots of dif things
 		print new_stringtok
 		new_string = str(new_stringtok.value)
