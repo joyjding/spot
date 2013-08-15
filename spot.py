@@ -32,10 +32,13 @@
 #########################################
 # TOKENIZER AND PARSER FOR SPOT LANGUAGE
 
-
+#imports#
 import sys
 import ply.lex as lex #import ply library
+
+#globals#
 token = None
+env = None
 
 #----------------NOW WE LEX -----------------------------------------------------------------------------
 #PLY Lexer. Takes in a string --> lextokens
@@ -83,6 +86,8 @@ token_names = [
 	'FOLLOW_THESE_INSTRUCTIONS',
 	'IF_NONE_CONDITION',
 	'SET_VALUE_TO',
+	'RUN_THE_FUNCTION',
+	'WITH_THE_ARGS',
 ]
 
 reserved = {
@@ -182,6 +187,12 @@ def t_WHILE_THE_CONDITION(t):
 
 def t_FOLLOW_THESE_INSTRUCTIONS(t):
 	r'[Ff]ollow\s(s\s)?these\sinstructions'
+	return t
+def t_RUN_THE_FUNCTION(t):
+	r'[Rr]un\sthe\sfunction'
+	return t
+def t_WITH_THE_ARGS(t):
+	r'with\sthe\sarguments'
 	return t
 
 # No return value. Token discarded
@@ -290,6 +301,10 @@ class FalseTok(LiteralToken):
 	def eval(self):
 		return False
 
+class NameTok(LiteralToken): 
+	lbp = 10
+	pass
+
 #Basic punctuation
 class CommaTok(Token):
 	lbp = 0
@@ -340,6 +355,8 @@ class WhichTakesTok(Token):
 class ArgumentsTok(Token):
 	pass
 class InstructionsTok(Token):
+	pass
+class WithTheArgsTok(Token):
 	pass
 
 
@@ -452,7 +469,44 @@ class DefineNewFuncTok(Token):
 	def __repr__(self):
 		return "(%s): .function_name = %s | .num_args = %s | .args = %s" %(self.__class__.__name__, self.function_name, self.num_args, self.args) 
 
+class RunTheFuncTok(Token):
+	"""Run the function numapples, passing in the arguments 4, 5, and 6."""
+	def __init__(self, value = 0):
+		self.value = value
+		self.func_name = []
+		self.args = []
 
+	def statementd(self):
+		advance(RunTheFuncTok)
+		#capture the multi-word name
+		while isinstance(token, NameTok):
+				name = advance(NameTok)
+				self.func_name.append(name)
+		#for saving arguments, if there are any
+		if isinstance(token, WithTheArgsTok):
+			advance(WithTheArgsTok)
+			while not isinstance(token, AndTok):
+				new_arg = advance()
+				self.args.append(new_arg)
+				advance(CommaTok)
+			advance(AndTok)
+			last_arg = advance()
+			self.args.append(last_arg)
+		advance(PeriodTok)			
+		print self
+		return self
+	def eval(self):
+		print "i got here!"
+		# parent = scope
+		# child = Scope()
+		# child.parent = parent #create child scope
+		# func_obj = scope.find(self.func_name)
+	def __repr__(self):
+		return "(%s): .func_name = %s | .args = %s" %(self.__class__.__name__, self.func_name, self.args) 
+
+
+
+	
 
 class IfTheConditionTok(Token):
 	"""If the condition x>4 is equal to true, follow these instructions:{}. 
@@ -577,10 +631,6 @@ class ScreenSayTok(Token):
 	def eval(self):
 		string = self.stringtok.eval()
 		print string
-
-class NameTok(LiteralToken): 
-	lbp = 10
-	pass
 
 class EndTok(Token):
 	lbp = 0
@@ -762,6 +812,8 @@ token_map = {
 	"WHICH_TAKES" : WhichTakesTok,
 	"CREATE_NEW_VARIABLE" : Create_A_New_VarTok,
 	"DEFINE_NEW_FUNCTION" : DefineNewFuncTok,
+	"RUN_THE_FUNCTION" : RunTheFuncTok,
+	"WITH_THE_ARGS" : WithTheArgsTok,
 	"IF_THE_CONDITION" : IfTheConditionTok,
 	"ELSE_IF_THE_CONDITION" : ElseIfTok,
 	"WHILE_THE_CONDITION" : WhileTheConditionTok,
