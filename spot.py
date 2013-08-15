@@ -72,6 +72,7 @@ token_names = [
 	'NAME',
 	'INDENT',
 	'ELSE',
+	'ELSE_IF_THE_CONDITION',
 	'SET',
 	'IS_EQUAL_TO',
 	'WHICH_TAKES',
@@ -105,8 +106,7 @@ reserved = {
 tokens = token_names + list(reserved.values())
 
 # Token functions-----
-#t_INT = r'[0-9][0-9]*'
-t_STRING = r'"[A-Za-z0-9_\s]*"'
+t_STRING = r'".*"'
 
 # math operators
 t_ADD_OP = r'\+'
@@ -137,6 +137,10 @@ def t_INT(t):
     r'\d+'
     t.value = int(t.value)
     return t
+
+def t_ELSE_IF_THE_CONDITION(t):
+	r'[Ee]lse\sif\sthe\scondition'
+	return t
 
 def t_IF_NONE_CONDITION(t):
 	r'[Ii]f\snone\sof\sthe\sprevious\sconditions\sare\strue'
@@ -244,9 +248,34 @@ class IntTok(LiteralToken):
 
 	def eval(self):
 		return self.value
+
 class StringTok(LiteralToken):
 	def eval(self):
-		return self.value
+		string = self.value[1:-1]
+		print 2, string
+
+		out_string = []
+
+		while string:	
+			start_brack = string.find("{")
+			if start_brack == -1: #no string interpolation
+				out_string.append(string)
+				break
+			else:
+				out_string.append(string[:start_brack]) #add beg string to outstring
+				end_brack = string.find("}")
+				new_statement_string = string[start_brack+1:end_brack] #give me the contents of the brackets
+				new_statement_lex = make_lex_tokens(new_statement_string)
+				new_class_tok = make_class_tokens(new_statement_lex)
+				advance()
+				mini_e = expression()
+				result = mini_e.eval()
+				result_string = str(result)
+				out_string.append(result_string)
+				string = string[end_brack+1:]
+
+		joined_string = "".join(out_string)
+		return joined_string
 
 # Booleans
 class TrueTok(LiteralToken):
@@ -302,6 +331,8 @@ class ToTok(Token):
 	pass
 class ElseTok(Token):
 	pass
+class ElseIfTok(Token):
+	pass
 class FollowTheseInstructionsTok(Token):
 	pass
 class WhichTakesTok(Token):
@@ -339,14 +370,15 @@ class Create_A_New_VarTok(Token):
 class SetTok(Token):
 	def __init__(self, value = 0):
 		self.value = value
-		self.varname = None
+		self.varname = []
 		self.varvalue = None
 
 	def statementd(self):
 		advance(SetTok)
-		#save name 
-		new_varname = advance(NameTok)
-		self.varname = new_varname.value
+		#save multiple-word name 
+		while isinstance(token, NameTok):
+			self.varname.append(token.value)
+			advance()
 		advance(PossTok)
 		advance(ValueTok)
 		advance(ToTok)
@@ -379,7 +411,7 @@ class DefineNewFuncTok(Token):
 		advance(DefineNewFuncTok)
 		#save multiple word names
 		while isinstance(token, NameTok):
-			self.function_name.append(token)
+			self.function_name.append(token.value)
 			advance()
 		#for saving arguments, if there are any
 		if isinstance(token, CommaTok):
@@ -403,7 +435,10 @@ class DefineNewFuncTok(Token):
 		new_block = parse_block()
 		self.block = new_block
 		advance(RCurlyTok)
-		return self
+		new_set = SetTok()
+		new_set.varname = self.function_name
+		new_set.varvalue = self
+		return new_set  
 
 	def eval(self):
 		pass
@@ -418,6 +453,7 @@ class DefineNewFuncTok(Token):
 		return "(%s): .function_name = %s | .num_args = %s | .args = %s" %(self.__class__.__name__, self.function_name, self.num_args, self.args) 
 
 
+
 class IfTheConditionTok(Token):
 	"""If the condition x>4 is equal to true, follow these instructions:{}. 
 	Else if the condition x<4 is equal to true, follow these instructions:{}. 
@@ -427,7 +463,9 @@ class IfTheConditionTok(Token):
 		self.value = value
 		self.condition = None
 		self.true_block = None
-		self.else_block = None 
+		self.elseif_cond = None
+		self.elseif_block = None
+		self.else_block = None
 
 	def statementd(self):
 		advance(IfTheConditionTok)
@@ -440,32 +478,55 @@ class IfTheConditionTok(Token):
 		new_block = parse_block()
 		self.true_block = new_block
 		advance(RCurlyTok)
-		advance(PeriodTok) 
-		while (not isinstance(token, IndentTok) and not isinstance(token, EndTok)):
-			if isinstance(token, ElseTok):
-				advance(ElseTok)
-				if isinstance(token, IfTheConditionTok):
-					new_if = token
-					new_else_block =new_if.statementd()
-					self.else_block = new_else_block
-				elif isinstance(token, CommaTok):
-					advance(CommaTok)
-					advance(FollowTheseInstructionsTok)
-					advance(ColonTok)
-					advance(LCurlyTok)
-					else_block = parse_block()
-					self.else_block = else_block
-					advance(RCurlyTok)
-					advance(PeriodTok)				
+		advance(PeriodTok)
+		if isinstance(token, ElseIfTok):
+			print 1, token
+			advance(ElseIfTok)
+			print 2, token
+			new_condition = statement()
+			self.elseif_cond = new_condition
+			print 3, self.elseif_cond
+			advance(CommaTok)
+			advance(FollowTheseInstructionsTok)
+			advance(ColonTok)
+			advance(LCurlyTok)
+			new_block = parse_block()
+			self.elseif_block = new_block
+			print 4, self.elseif_block
+			advance(RCurlyTok)
+			advance(PeriodTok)
+		if isinstance(token, ElseTok):
+			advance(ElseTok)
+			advance(CommaTok)
+			advance(FollowTheseInstructionsTok)
+			advance(ColonTok)
+			advance(LCurlyTok)
+			else_block = parse_block()
+			print 5,"else_block", else_block
+			self.else_block = else_block
+			advance(RCurlyTok)
+			advance(PeriodTok)				
 		return self
 
 	def eval(self):	
 		if self.condition.eval() == True:
+			print "The if condition %s is true -->executing if block" % self.condition
 			for statement in self.true_block:
 				statement.eval()
-		else:
-			for statement in self.else_block:
-				statement.eval()
+		elif self.condition.eval() == False:
+			print "The if condition %s is not true-->looking for else if or else" % self.condition
+			if (self.elseif_cond == True and self.elseif_block != None):
+				print "Else if condition %s is true-->executing else if block"
+				for statement in self.elseif_block:
+					statement.eval()
+			if (self.elseif_cond == False and self.else_block != None):
+				print "The else if condition %s is not true-->executing else block"
+				for statement in self.else_block:
+					statement.eval()
+			if (self.elseif_block == None and self.else_block != None):
+				print "Previous conditions were not true-->Executing the else condition"
+				for statement in self.else_block:
+					statement.eval()
 
 	def __repr__(self):
 		return "(%s): self.condition = %s, self.true_block = %s, self.else_block = %s " %(self.__class__.__name__, self.condition, self.true_block, self.else_block)
@@ -503,22 +564,19 @@ class WhileTheConditionTok(Token):
 class ScreenSayTok(Token):
 	def __init__(self, value = 0):
 		self.value = value
-		self.pre_string = None
+		self.stringtok = None
+		self.string = None
 	def statementd(self):
 		advance(ScreenSayTok)
+		print 1, token
 		advance(ColonTok)
-		#first string processing
-		new_stringtok = advance(StringTok) #could be lots of dif things
-		new_string = str(new_stringtok.value)
-		self.pre_string = new_string
-		#second string processing
-		#call the lexer on this string
-
-		print screensay_tokens
-
+		print 2, token
+		new_stringtok = advance(StringTok)
+		self.stringtok = new_stringtok
 		return self
 	def eval(self):
-		print " ".join(self.string)
+		string = self.stringtok.eval()
+		print string
 
 class NameTok(LiteralToken): 
 	lbp = 10
@@ -535,8 +593,6 @@ class EndTok(Token):
 class Program:
 	def statementd(self):
 		self.children = statement_list()
-		for mini_selves in self.children:
-			print mini_selves
 		return self
 	def eval(self):
 		for mini_selves in self.children:
@@ -548,9 +604,27 @@ class Scope:
 		self.dict = {}
 		self.parent = None
 	def define(self, varkey, varvalue = None):
-		self.dict[varkey] = varvalue
+		if self.dict.get(varkey) != None:
+			raise SyntaxError("The variable %s has already been defined, and its value is %s" %(self.varkey, self.dict[varkey]))
+		else: 
+			self.dict[varkey] = varvalue
 	def find(self, varkey):
-		return self.dict.get(varkey)
+		while True:
+			value = self.get(varkey)
+			key = self.dict.has_key(varkey)
+			if key: 
+				if value!=None: #if value is not none, return value
+					return value
+				elif value == None:
+					self = self.parent
+					if self == None:
+						print "The variable %s has been created but not defined" %varkey				
+			self = self.parent #look in parent scope
+			if self == None:
+				print "The variable %s has not yet been created or defined"
+	
+	def pop(self):
+		scope = self.parent
 
 # Basic Math classes
 class AddOpTok(BinaryOpToken):
@@ -689,6 +763,7 @@ token_map = {
 	"CREATE_NEW_VARIABLE" : Create_A_New_VarTok,
 	"DEFINE_NEW_FUNCTION" : DefineNewFuncTok,
 	"IF_THE_CONDITION" : IfTheConditionTok,
+	"ELSE_IF_THE_CONDITION" : ElseIfTok,
 	"WHILE_THE_CONDITION" : WhileTheConditionTok,
 	"FOLLOW_THESE_INSTRUCTIONS" : FollowTheseInstructionsTok,
 
@@ -703,14 +778,14 @@ token_map = {
 def statement_list():
 	statements = []
 
-	while token.__class__.__name__ != 'EndTok':
+	while not isinstance(token, EndTok):
 		statements.append(statement())	
 	return statements
 
 def parse_block():
 	block_statements = [] #initialize empty block statement list
 	
-	while token.__class__.__name__ != 'RCurlyTok': #while there is no rcurly
+	while not isinstance(token, RCurlyTok): #while there is no rcurly
 		new_statement = statement()
 		block_statements.append(new_statement)
 	return block_statements
@@ -746,9 +821,9 @@ def statement(): # parses one statement
 		return expression(0)
 
 def parse():	
+	global scope
 	#create a new global scope -->later use nested scopes
 	scope = Scope()
-	global scope
 	advance() #to put the first token in
 	p = Program()
 	p.statementd()	
@@ -772,9 +847,9 @@ def make_lex_tokens(source):
 			break	
 		lex_tokens.append(tok)
 
-	print "\n\n\nLEXING"
-	print "-----Here are the lex tokens you ordered!"
-	print lex_tokens
+	# print "\n\n\nLEXING"
+	# print "-----Here are the lex tokens you ordered!"
+	# print lex_tokens
 	return lex_tokens
 
 def make_class_tokens(lex_token_list):
@@ -791,9 +866,9 @@ def make_class_tokens(lex_token_list):
 	new_end_tok = EndTok()
 	class_tokens.append(new_end_tok)
 
-	print "\nTOKENIZING"
-	print"-----These class tokens are steaming hot!"
-	print class_tokens
+	# print "\nTOKENIZING"
+	# print"-----These class tokens are steaming hot!"
+	# print class_tokens
 	return class_tokens
 
 def main():
@@ -805,22 +880,24 @@ def main():
 		source = raw_input(">What would you like to parse? ")
 	
 	lex_tokens = make_lex_tokens(source)
-
-	
-	class_tokens = make_class_tokens(lex_tokens)
-	print "\n\n\nLEXING"
-	print "-----Here are the lex tokens you ordered!"
+	print "\n\n\nMAIN LEXING"
+	# print "-----Here are the lex tokens you ordered!"
 	print lex_tokens
 	
+	class_tokens = make_class_tokens(lex_tokens)
+	print "\nMAIN CLASS TOKENIZING"
+	# print"-----These class tokens are steaming hot!"
+	print class_tokens
+	
 	#parse the program
-	print "\nPARSING" 
-	print "-----Woo! Nothing's broken yet. About to parse now!"
+	print "\nMAIN PARSING" 
+	# print "-----Woo! Nothing's broken yet. About to parse now!"
 	program = parse()
 	print "\n\nON TO EVALUATION, mateys-------------->"
 	
 	#eval the program
 	print "\n-----Here are the results of your eval!"
-	print program.eval()
+	print "Program eval:", program.eval()
 	
 
 if __name__ == "__main__":
