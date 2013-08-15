@@ -38,7 +38,7 @@ import ply.lex as lex #import ply library
 
 #globals#
 token = None
-env = None
+global_env = {}
 
 #----------------NOW WE LEX -----------------------------------------------------------------------------
 #PLY Lexer. Takes in a string --> lextokens
@@ -257,11 +257,11 @@ class IntTok(LiteralToken):
 	def nulld(self):
 		return self
 
-	def eval(self):
+	def eval(self, env):
 		return self.value
 
 class StringTok(LiteralToken):
-	def eval(self):
+	def eval(self, env):
 		string = self.value[1:-1]
 		print 2, string
 
@@ -292,13 +292,13 @@ class StringTok(LiteralToken):
 class TrueTok(LiteralToken):
 	lbp = 0
 
-	def eval(self):
+	def eval(self, env):
 		return True
 
 class FalseTok(LiteralToken):
 	lbp = 0
 
-	def eval(self):
+	def eval(self, env):
 		return False
 
 class NameTok(LiteralToken): 
@@ -376,10 +376,10 @@ class Create_A_New_VarTok(Token):
 		advance(PeriodTok)
 		return self
 
-	def eval(self):
-		#create a new variable in the scope dictionary
-		scope.dict[self.varname] = None
-		print "added %r to scope.dict" %self.varname
+	def eval(self, env):
+		#create a new variable in the env dict		
+		env[self.varname] = None
+		print "added %r to env dict" %self.varname
 
 	def __repr__(self):
 		return "(%s): self.varname = %s" %(self.__class__.__name__, self.varname)
@@ -406,11 +406,10 @@ class SetTok(Token):
 		advance(PeriodTok)
 		return self
 	
-	def eval(self):
-		if scope.dict.has_key(self.varname) == False:
-			raise SyntaxError("Variable %s doesn't exist" %self.varname)
-		scope.define(self.varname, self.varvalue)
-		print "set scope.dict[%r]: %r" %(self.varname, self.varvalue)
+	def eval(self, env):
+		env[self.varname] = self.varvalue
+		print "set env dict[%r]: %r" %(self.varname, self.varvalue)
+		print env
 		
 	def __repr__(self):
 		return "(%s): .varname = %s | .varvalue = %s " %(self.__class__.__name__, self.varname, self.varvalue)
@@ -457,8 +456,10 @@ class DefineNewFuncTok(Token):
 		new_set.varvalue = self
 		return new_set  
 
-	def eval(self):
-		pass
+	def eval(self, env):
+		#look up variable in env
+		env[self.function_name] = self		
+
 		# f_name = self.function_name
 		# if self.num_args == 0:
 		# 	def f_name():
@@ -495,7 +496,7 @@ class RunTheFuncTok(Token):
 		advance(PeriodTok)			
 		print self
 		return self
-	def eval(self):
+	def eval(self, env):
 		print "i got here!"
 		# parent = scope
 		# child = Scope()
@@ -562,7 +563,7 @@ class IfTheConditionTok(Token):
 			advance(PeriodTok)				
 		return self
 
-	def eval(self):	
+	def eval(self, env):	
 		if self.condition.eval() == True:
 			print "The if condition %s is true -->executing if block" % self.condition
 			for statement in self.true_block:
@@ -607,7 +608,7 @@ class WhileTheConditionTok(Token):
 		advance(PeriodTok)
 		return self		
 	
-	def eval(self):
+	def eval(self, env):
 		while self.condition.eval() == True:
 			for statement in self.block:
 				statement.eval() 
@@ -628,7 +629,7 @@ class ScreenSayTok(Token):
 		new_stringtok = advance(StringTok)
 		self.stringtok = new_stringtok
 		return self
-	def eval(self):
+	def eval(self, env):
 		string = self.stringtok.eval()
 		print string
 
@@ -644,7 +645,7 @@ class Program:
 	def statementd(self):
 		self.children = statement_list()
 		return self
-	def eval(self):
+	def eval(self, env):
 		for mini_selves in self.children:
 			mini_selves.eval()
 
@@ -686,7 +687,7 @@ class AddOpTok(BinaryOpToken):
 		self.first = left
 		self.second = expression(50)
 		return self
-	def eval(self):
+	def eval(self, env):
 		print "Interpreter added %r and %r" % (self.first, self.second)
 		return self.first.eval() + self.second.eval()
 	
@@ -699,7 +700,7 @@ class SubOpTok(BinaryOpToken):
 		self.first = left
 		self.second = expression(50)
 		return self
-	def eval(self):
+	def eval(self, env):
 		print "Interpreter subtracted %r from %r" %(self.second, self.first)
 		return self.first.eval() - self.second.eval()
 
@@ -710,7 +711,7 @@ class MulOpTok(BinaryOpToken):
 		self.first = left
 		self.second = expression(70)
 		return self
-	def eval(self):
+	def eval(self, env):
 		print "Interpreter multipled %r and %r" % (self.first, self.second)
 		return self.first.eval() * self.second.eval()
 
@@ -721,7 +722,7 @@ class DivOpTok(BinaryOpToken):
 		self.first = left
 		self.second = expression(70)
 		return self
-	def eval(self):
+	def eval(self, env):
 		print "Interpreter divided %r by %r" %(self.first, self.second)
 		return self.first.eval() / self.second.eval()
 
@@ -731,7 +732,7 @@ class GreaterThanOpTok(BinaryOpToken):
 		self.first = left
 		self.second = expression(40)
 		return self
-	def eval(self):
+	def eval(self, env):
 		if self.first.eval() > self.second.eval():
 			return True
 		else:
@@ -743,7 +744,7 @@ class LessThanOpTok(BinaryOpToken):
 		self.first = left
 		self.second = expression(40)
 		return self
-	def eval(self):
+	def eval(self, env):
 		if self.first.eval() < self.second.eval():
 			return True
 		else: 
@@ -754,7 +755,7 @@ class IsEqualToTok(BinaryOpToken):
 		self.first = left
 		self.second = expression(40)
 		return self
-	def eval(self):
+	def eval(self, env):
 		if self.first.eval() == self.second.eval():
 			return True
 		else:
@@ -949,7 +950,7 @@ def main():
 	
 	#eval the program
 	print "\n-----Here are the results of your eval!"
-	print "Program eval:", program.eval()
+	print "Program eval:", program.eval(globalenv)
 	
 
 if __name__ == "__main__":
