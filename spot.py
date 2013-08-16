@@ -786,7 +786,14 @@ class AddOpTok(BinaryOpToken):
 	def eval(self, env):
 		# print ">>> Added %r and %r" % (self.first, self.second)
 		return self.first.eval(env) + self.second.eval(env)
-	
+	def codegen(self):
+		code = [
+		"mov eax %s" % self.first.value, #move self.first into eax
+		"mov ebx %s" % self.second.value, #move self.second into ebx
+		"mov eax ebx" #add eax and ebx, store in eax
+		]
+		return code
+
 class SubOpTok(BinaryOpToken):
 	lbp = 50
 
@@ -1059,14 +1066,17 @@ def main():
 	#print "\n-----Here are the results of your eval!"
 	# program.eval(globalenv)
 	code = program.codegen()
-	base_file = filename.split(".")[0]
-	f = open("%s.js"%base_file, "w")
-	for line in code:
-		f.write(line + "\n");
-	# f.writelines(code);
-	f.close();
-	# print code
+	# base_file = filename.split(".")[0]
+	# f = open("%s.js"%base_file, "w")
+	# for line in code:
+	# 	f.write(line + "\n");
+	# # f.writelines(code);
+	# f.close();
+	# # print code
 	print "Compilation complete"
+	for codelet in code:
+		print codelet
+
 	
 
 if __name__ == "__main__":
