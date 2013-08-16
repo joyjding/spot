@@ -275,10 +275,12 @@ class IntTok(LiteralToken):
 	def nulld(self):
 		return self
 
+	def codegen(self):
+		return ["%d"%self.value]
+
 class StringTok(LiteralToken):
 	def eval(self, env):
 		string = self.value[1:-1]
-		print 2, string
 
 		out_string = []
 
@@ -295,16 +297,19 @@ class StringTok(LiteralToken):
 				new_class_tok = make_class_tokens(new_statement_lex)
 				advance()
 				mini_e = statement() #something needs to change here
-				print "statement", mini_e
+				# print "statement", mini_e
 				result = mini_e.eval(env)
-				print "env", env
-				print "mini_e.eval", result
+				# print "env", env
+				# print "mini_e.eval", result
 				result_string = str(result)
 				out_string.append(result_string)
 				string = string[end_brack+1:]
 
 		joined_string = "".join(out_string)
 		return joined_string
+
+	def codegen(self):
+		return [self.value]
 
 # Booleans
 class TrueTok(LiteralToken):
@@ -428,10 +433,14 @@ class Create_A_New_VarTok(Token):
 		advance(PeriodTok)
 		return self
 
+	def codegen(self):
+		return ["var %s;"%self.varname]
+
+
 	def eval(self, env):
 		#create a new variable in the env dict		
 		env[self.varname] = None
-		print ">>Added %r to env dict" %self.varname
+		#print ">>Added %r to env dict" %self.varname
 
 	def __repr__(self):
 		return "(%s): self.varname = %s" %(self.__class__.__name__, self.varname)
@@ -451,22 +460,26 @@ class SetTok(Token):
 			advance()
 		new_varname = " ".join(varname_list)
 		self.varname = new_varname
-		print self.varname	
 		advance(PossTok)
 		advance(ValueTok)
 		advance(ToTok)
 		if not (isinstance(token, IntTok) or isinstance(token, StringTok) or isinstance(token, NameTok)):
 			raise SyntaxError ("Expected a value for the variable %s, but got incompatible type") %self.varname
-		new_varvalue = advance()
-		self.varvalue = new_varvalue.value
+		new_varvalue = statement()
+		self.varvalue = new_varvalue
 		advance(PeriodTok)
 		return self
 	
+	def codegen(self):
+		results = self.varvalue.codegen()
+
+		return ["%s = %s;"%(self.varname, results[0])]
+
 	def eval(self, env):
 		if env.has_key(self.varname) == False:
 			raise SyntaxError("This variable has not been created yet")
-		env[self.varname] = self.varvalue
-		print ">>Set env dict[%r]: %r. Env is now %r" %(self.varname, self.varvalue, env)
+		env[self.varname] = self.varvalue.eval(env)
+		#print ">>Set env dict[%r]: %r. Env is now %r" %(self.varname, self.varvalue, env)
 		
 	def __repr__(self):
 		return "(%s): .varname = %s | .varvalue = %s " %(self.__class__.__name__, self.varname, self.varvalue)
@@ -523,7 +536,7 @@ class DefineNewFuncTok(Token):
 	def eval(self, env):
 		#look up variable in env
 		env[self.function_name] = self	
-		print ">>Put %r in the env dict" % self.function_name, env
+		print ">> Put %r in the env dict" % self.function_name, env
 
 	def __repr__(self):
 		return "(%s): .function_name = %s | .num_args = %s | .args = %s" %(self.__class__.__name__, self.function_name, self.num_args, self.args) 
@@ -698,9 +711,14 @@ class ScreenSayTok(Token):
 		self.stringtok = new_stringtok
 		advance(PeriodTok)
 		return self
+	def codegen(self):
+		lines = self.stringtok.codegen()
+		return ["""console.log(%s); """%"".join(lines)]
+		pass
+
 	def eval(self, env):
 		string = self.stringtok.eval(env)
-		print ">>> Screensay printed to screen!"
+		#print ">>> Screensay printed to screen!"
 		print string
 	def __repr(self):
 		return "(%s): .string = %s" %(self.__class__.__name__, self.string) 
@@ -720,6 +738,12 @@ class Program:
 	def eval(self, env):
 		for mini_selves in self.children:
 			mini_selves.eval(env)
+	def codegen(self):
+		code = []
+		for statement in self.children:
+			code.extend(statement.codegen())
+		return code
+
 
 #eval classes
 class Scope:
@@ -760,7 +784,7 @@ class AddOpTok(BinaryOpToken):
 		self.second = expression(50)
 		return self
 	def eval(self, env):
-		print ">>> Added %r and %r" % (self.first, self.second)
+		# print ">>> Added %r and %r" % (self.first, self.second)
 		return self.first.eval(env) + self.second.eval(env)
 	
 class SubOpTok(BinaryOpToken):
@@ -1016,24 +1040,33 @@ def main():
 		source = raw_input(">What would you like to parse? ")
 	
 	lex_tokens = make_lex_tokens(source)
-	print "\n\n\nMAIN LEXING"
+	#print "\n\n\nMAIN LEXING"
 	# print "-----Here are the lex tokens you ordered!"
-	print lex_tokens
+	#print lex_tokens
 	
 	class_tokens = make_class_tokens(lex_tokens)
-	print "\nMAIN CLASS TOKENIZING"
+	#print "\nMAIN CLASS TOKENIZING"
 	# print"-----These class tokens are steaming hot!"
-	print class_tokens
+	#print class_tokens
 	
 	#parse the program
-	print "\nMAIN PARSING" 
+	#print "\nMAIN PARSING" 
 	# print "-----Woo! Nothing's broken yet. About to parse now!"
 	program = parse()
-	print "\n\nON TO EVALUATION, mateys-------------->"
+	#print "\n\nON TO EVALUATION, mateys-------------->"
 	
 	#eval the program
-	print "\n-----Here are the results of your eval!"
-	print "Program eval:", program.eval(globalenv)
+	#print "\n-----Here are the results of your eval!"
+	# program.eval(globalenv)
+	code = program.codegen()
+	base_file = filename.split(".")[0]
+	f = open("%s.js"%base_file, "w")
+	for line in code:
+		f.write(line + "\n");
+	# f.writelines(code);
+	f.close();
+	# print code
+	print "Compilation complete"
 	
 
 if __name__ == "__main__":
