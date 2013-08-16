@@ -33,3 +33,16 @@ nosetests.xml
 .mr.developer.cfg
 .project
 .pydevproject
+
+#personal files
+Notes
+Things_learned.py
+functioncall.spot
+hangman.spot
+if.spot
+screensay.spot
+spotgrammar.txt
+spotlexer.py
+test.js
+test.spot
+brack.py
