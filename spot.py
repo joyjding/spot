@@ -39,6 +39,7 @@ import ply.lex as lex #import ply library
 #globals#
 token = None
 globalenv = {}
+if_count = 0
 
 #----------------NOW WE LEX -----------------------------------------------------------------------------
 #PLY Lexer. Takes in a string --> lextokens
@@ -471,9 +472,11 @@ class SetTok(Token):
 		return self
 	
 	def codegen(self):
-		results = self.varvalue.codegen()
+		pass
+		# results = self.varvalue.codegen()
 
-		return ["%s = %s;"%(self.varname, results[0])]
+		# return ["%s = %s;"%(self.varname, results[0])]
+		# not sure what's going on here
 
 	def eval(self, env):
 		if env.has_key(self.varname) == False:
@@ -485,7 +488,7 @@ class SetTok(Token):
 		return "(%s): .varname = %s | .varvalue = %s " %(self.__class__.__name__, self.varname, self.varvalue)
 
 class DefineNewFuncTok(Token):
-	"""Define a new function num apples, which takes 4 arguments: X, Y, and Z. 
+	"""Define a new function num apples, which takes 3 arguments: X, Y, and Z. 
 	When called, it follows these instructions: {}."""	
 
 	def __init__(self, value = 0):
@@ -603,6 +606,7 @@ class IfTheConditionTok(Token):
 
 	def __init__(self, value = 0):
 		self.value = value
+		self.label = None
 		self.condition = None
 		self.true_block = None
 		self.elseif_cond = None
@@ -667,6 +671,12 @@ class IfTheConditionTok(Token):
 
 	def __repr__(self):
 		return "(%s): self.condition = %s, self.true_block = %s, self.else_block = %s " %(self.__class__.__name__, self.condition, self.true_block, self.else_block)
+	def codegen(self):
+
+		pass
+
+
+
 
 class WhileTheConditionTok(Token):
 	"""While the condition x>4 is equal to true, follow these instructions: {block}"""
@@ -739,7 +749,16 @@ class Program:
 		for mini_selves in self.children:
 			mini_selves.eval(env)
 	def codegen(self):
-		code = []
+		code = [ #header
+		"; < Woof! A Spot --> NASM file for your compiling pleasure /(^.^)\ >",
+		"\n",
+		"section .text",
+		"\n",
+		"global mystart ;make the main function externally visible",
+		"\n",
+		"mystart:\n",
+		]
+
 		for statement in self.children:
 			code.extend(statement.codegen())
 		return code
@@ -790,7 +809,7 @@ class AddOpTok(BinaryOpToken):
 		code = [
 		"mov eax %s" % self.first.value, #move self.first into eax
 		"mov ebx %s" % self.second.value, #move self.second into ebx
-		"mov eax ebx" #add eax and ebx, store in eax
+		"add eax ebx" #add eax and ebx, store in eax
 		]
 		return code
 
@@ -806,6 +825,13 @@ class SubOpTok(BinaryOpToken):
 	def eval(self, env):
 		print ">>> Subtracted %r from %r" %(self.second, self.first)
 		return self.first.eval() - self.second.eval()
+	def codegen(self):
+		code = [
+		"mov eax %s" % self.first.value, #move self.first into eax
+		"mov ebx %s" % self.second.value, #move self.second into ebx
+		"sub eax ebx" #add eax and ebx, store in eax
+		]
+		return code
 
 class MulOpTok(BinaryOpToken):
 	lbp = 70
@@ -817,6 +843,8 @@ class MulOpTok(BinaryOpToken):
 	def eval(self, env):
 		print ">>> Multipled %r and %r" % (self.first, self.second)
 		return self.first.eval() * self.second.eval()
+	def codegen(self):
+		pass
 
 
 class DivOpTok(BinaryOpToken):
@@ -1038,6 +1066,7 @@ def make_class_tokens(lex_token_list):
 	# print class_tokens
 	return class_tokens
 
+
 def main():
 	filename = sys.argv[1] if len(sys.argv) > 1 else None
 
@@ -1065,18 +1094,22 @@ def main():
 	#eval the program
 	#print "\n-----Here are the results of your eval!"
 	# program.eval(globalenv)
+	
 	code = program.codegen()
-	# base_file = filename.split(".")[0]
-	# f = open("%s.js"%base_file, "w")
-	# for line in code:
-	# 	f.write(line + "\n");
-	# # f.writelines(code);
-	# f.close();
-	# # print code
-	print "Compilation complete"
+	
+	base_file = filename.split(".")[0]
+	f = open("%s.s"%base_file, "w")
+	
+	for line in code:
+		f.write(line + "\n");
+		f.writelines(code);
+	f.close();
+	
+	print "\n\n\n>>> Assembly Code------------------------------->"
 	for codelet in code:
 		print codelet
 
+	print ">>> Compilation complete\n\n"
 	
 
 if __name__ == "__main__":
