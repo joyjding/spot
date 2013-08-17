@@ -609,12 +609,19 @@ class IfTheConditionTok(Token):
 		self.label = None
 		self.condition = None
 		self.true_block = None
+		self.elseif_label = None
 		self.elseif_cond = None
 		self.elseif_block = None
+		self.else_label = None
 		self.else_block = None
 
 	def statementd(self):
+		global if_count
 		advance(IfTheConditionTok)
+		new_if_no = if_count
+		self.label = "if_%d" %new_if_no
+		print "self.label", self.label
+		if_count+=1
 		new_condition = statement()
 		self.condition = new_condition
 		advance(CommaTok)
@@ -627,6 +634,8 @@ class IfTheConditionTok(Token):
 		advance(PeriodTok)
 		if isinstance(token, ElseIfTok):
 			advance(ElseIfTok)
+			self.elseif_label = "elseif_%d" % new_if_no
+			print "self.elseif_label", self.elseif_label
 			new_condition = statement()
 			self.elseif_cond = new_condition
 			advance(CommaTok)
@@ -639,6 +648,8 @@ class IfTheConditionTok(Token):
 			advance(PeriodTok)
 		if isinstance(token, ElseTok):
 			advance(ElseTok)
+			self.else_label = "else_%d" %new_if_no
+			print "self.else_label", self.else_label
 			advance(CommaTok)
 			advance(FollowTheseInstructionsTok)
 			advance(ColonTok)
@@ -672,8 +683,8 @@ class IfTheConditionTok(Token):
 	def __repr__(self):
 		return "(%s): self.condition = %s, self.true_block = %s, self.else_block = %s " %(self.__class__.__name__, self.condition, self.true_block, self.else_block)
 	def codegen(self):
-
-		pass
+		return ["%s" %self.label]
+		
 
 
 
