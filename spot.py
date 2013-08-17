@@ -40,6 +40,8 @@ import ply.lex as lex #import ply library
 token = None
 globalenv = {}
 if_count = 0
+loop_count = 0
+literal_list = []
 
 #----------------NOW WE LEX -----------------------------------------------------------------------------
 #PLY Lexer. Takes in a string --> lextokens
@@ -243,7 +245,6 @@ class Token:
 	def __init__(self, value = 0):
 		self.value = value
 	def nulld(self):
-		print self 
 		raise SyntaxError("This should not have a nulld")
 	def leftd(self, left):
 		pass
@@ -280,6 +281,11 @@ class IntTok(LiteralToken):
 		return ["%d"%self.value]
 
 class StringTok(LiteralToken):
+	def __init__(self, value = 0):
+		self.value = value
+		self.len = len(self.value[1:-1])
+		self.label = None
+
 	def eval(self, env):
 		string = self.value[1:-1]
 
@@ -310,7 +316,12 @@ class StringTok(LiteralToken):
 		return joined_string
 
 	def codegen(self):
-		return [self.value]
+		global literal_list
+		new_label = self.value.replace(" ", "_")[1:-1]
+		self.label = new_label
+
+		data = ["%s db %s" %(self.label, self.value)]
+		literal_list.extend(data)
 
 # Booleans
 class TrueTok(LiteralToken):
@@ -694,11 +705,16 @@ class WhileTheConditionTok(Token):
 	
 	def __init__(self, value = 0):
 		self.value = value
+		self.label = None
 		self.condition = None
 		self.block = None
 
 	def statementd(self):
+		global loop_count
 		advance(WhileTheConditionTok)
+		new_loop_no = loop_count
+		self.label = "loop_%d" %new_loop_no
+		print self.label
 		new_condition = statement()
 		self.condition = new_condition
 		advance(CommaTok)
@@ -725,24 +741,43 @@ class ScreenSayTok(Token):
 		self.value = value
 		self.stringtok = None
 		self.string = None
+		self.string_label = None
+		self.string_len = None
 	def statementd(self):
 		advance(ScreenSayTok)
 		advance(ColonTok)
 		new_stringtok = advance(StringTok)
 		self.stringtok = new_stringtok
+		self.string_label = self.stringtok.label
 		advance(PeriodTok)
 		return self
-	def codegen(self):
-		lines = self.stringtok.codegen()
-		return ["""console.log(%s); """%"".join(lines)]
-		pass
-
 	def eval(self, env):
 		string = self.stringtok.eval(env)
 		#print ">>> Screensay printed to screen!"
 		print string
 	def __repr(self):
 		return "(%s): .string = %s" %(self.__class__.__name__, self.string) 
+	def codegen(self):
+		self.stringtok.codegen()
+		print literal_list
+		# string = self.stringtok.codegen() #receive the string
+		# return ["printf %s] % self.string_label
+		commands = [
+		"; prepare the arguments",
+		"push dword %s 			; string length arg" %self.stringtok.len,
+		"push dword %s          	; string to print arg" %self.stringtok.label,
+		"push dword 1           		; file descriptor value",
+		"\n",
+		"; make the system call to write",
+		"mov eax, 0x4 			; system call number for writescreen",
+		"sub esp, 4 			; move the stack pointer for extra space",
+		"int 0x80			; code to execute system call",
+		"\n",
+		"; clean up the stack",
+		"add esp, 16 			; args * 4 bytes/arg + 4 bytes extra space"
+		"\n"] 
+
+		return commands
 
 class EndTok(Token):
 	lbp = 0
@@ -760,15 +795,7 @@ class Program:
 		for mini_selves in self.children:
 			mini_selves.eval(env)
 	def codegen(self):
-		code = [ #header
-		"; < Woof! A Spot --> NASM file for your compiling pleasure /(^.^)\ >",
-		"\n",
-		"section .text",
-		"\n",
-		"global mystart ;make the main function externally visible",
-		"\n",
-		"mystart:\n",
-		]
+		code = []
 
 		for statement in self.children:
 			code.extend(statement.codegen())
@@ -1105,21 +1132,60 @@ def main():
 	#eval the program
 	#print "\n-----Here are the results of your eval!"
 	# program.eval(globalenv)
-	
-	code = program.codegen()
+	header = [
+		"; < Woof! A Spot --> NASM file for your compiling pleasure /(^.^)\ >",
+		"\n; ----------------",
+		"section .text",
+		"global mystart ;make the main function externally visible",
+		"; ----------------",
+		";START OF PROGRAM\n",
+		"mystart:\n",
+		]
+
+	footer = [
+		"; --------------------------------------------",
+		"; EXIT THE PROGRAM\n",
+		"; prepare the argument for the sys call to exit",
+		"push dword 0 			; exit status returned to OS",
+		"\n",
+		"; make the call to sys call to exit",
+		"mov eax, 0x1 			; sys call no. for exit",
+		"sub esp, 4 			; give it some extra space",
+		"int 0x80 			; make the system call"
+	]
+
+
+	code = header + program.codegen()
 	
 	base_file = filename.split(".")[0]
-	f = open("%s.s"%base_file, "w")
+	f = open("%s.asm"%base_file, "w")
 	
 	for line in code:
-		f.write(line + "\n");
-		f.writelines(code);
+		f.write(line + "\n")
+
+	#data and footer section
+	data1 = [
+	";----------\n",
+	"section .data\n"
+	]
+
+	footer_data = data1 + literal_list
+
+	for line in footer_data:
+		f.write(line + "\n")
+
+	
+
+	#close the file
 	f.close();
 	
-	print "\n\n\n>>> Assembly Code------------------------------->"
+	#print out in the terminal
+	print "\n\n\n>>> Assembly Code------------------------------->\n"
 	for codelet in code:
 		print codelet
-
+	for data in footer_data:
+		print data
+	print "\n-----------------"
 	print ">>> Compilation complete\n\n"
 	
 
