@@ -1169,7 +1169,7 @@ def main():
 	"section .data\n"
 	]
 
-	footer_data = data1 + literal_list
+	footer_data = footer + data1 + literal_list
 
 	for line in footer_data:
 		f.write(line + "\n")
