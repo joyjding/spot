@@ -617,7 +617,7 @@ class IfTheConditionTok(Token):
 
 	def __init__(self, value = 0):
 		self.value = value
-		self.label = None
+		self.labelno = None
 		self.condition = None
 		self.true_block = None
 		self.elseif_label = None
@@ -630,7 +630,7 @@ class IfTheConditionTok(Token):
 		global if_count
 		advance(IfTheConditionTok)
 		new_if_no = if_count
-		self.label = "if_%d" %new_if_no
+		self.labelno = "%d" %new_if_no
 		if_count+=1
 		new_condition = statement()
 		self.condition = new_condition
@@ -719,11 +719,11 @@ class IfTheConditionTok(Token):
 
 		# add dif jump comparisons --> if block
 		if isinstance(self.condition, GreaterThanOpTok):
-			commands.extend(["JG %s" % self.label]) #jump to ifblocklabel
+			commands.extend(["JG if_%s" % self.labelno]) #jump to ifblocklabel
 		elif isinstance(self.condition, LessThanOpTok):
-			commands.extend(["JL %s" % self.label])
+			commands.extend(["JL if_%s" % self.labelno])
 		elif isinstance(self.condition, IsEqualToTok):
-			commands.extend (["JE %s" % self.label])
+			commands.extend (["JE if_%s" % self.labelno])
 		
 
 		#add elseif cond code
@@ -746,23 +746,30 @@ class IfTheConditionTok(Token):
 			commands.extend(else_command)
 
 		#add true block code
-		true_block = []
+		true_block = ["if_%s:" % self.labelno]
 		for block in self.true_block:
 			true_block.extend(block.codegen())
+		true_block.extend(["JMP endif_%s" %self.labelno])
 		commands.extend(true_block)
 
 		#add else if true block
-		else_if_block = []
-		for block in self.elseif_block:
-			else_if_block.extend(block.codegen())
-		commands.extend(else_if_block)
+		if self.elseif_block!=None:
+			else_if_block = ["%s:" %self.elseif_label]
+			for block in self.elseif_block:
+				else_if_block.extend(block.codegen())
+			else_if_block.extend(["JMP endif_%s" %self.labelno])
+			commands.extend(else_if_block)
 		
 		#add else true block
-		else_block = []
-		for block in self.else_block:
-			else_block.extend(block.codegen())
-		commands.extend(else_block)
+		if self.else_block!=None:
+			else_block = ["%s:" %self.else_label]
+			for block in self.else_block:
+				else_block.extend(block.codegen())
+			else_block.extend(["JMP endif_%s" %self.labelno])
+			commands.extend(else_block)
 
+		#end if
+		commands.extend(["endif_%s:" %self.labelno])
 		return commands
 
 class WhileTheConditionTok(Token):
@@ -1257,9 +1264,8 @@ def main():
 		"int 0x80 			; make the system call"
 	]
 
-
-	#code = header + program.codegen()
-	code = program.codegen() #taking out headers and footers for now
+	code = header + program.codegen()
+	# code = program.codegen() #taking out headers and footers for now
 
 	base_file = filename.split(".")[0]
 	f = open("%s.asm"%base_file, "w")
@@ -1273,13 +1279,12 @@ def main():
 	"section .data\n"
 	]
 
-	# footer_data = footer + data1 + literal_list
+	footer_data = footer + data1 + literal_list
 
-	# for line in footer_data:
-	# 	f.write(line + "\n")
+	for line in footer_data:
+		f.write(line + "\n")
 
 	
-
 	#close the file
 	f.close();
 	
