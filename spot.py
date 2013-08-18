@@ -77,6 +77,7 @@ token_names = [
 	
 	'NAME',
 
+	'A_AN',
 	'INDENT',
 	'ELSE',
 	'ELSE_IF_THE_CONDITION',
@@ -110,6 +111,7 @@ reserved = {
 	'false' : 'FALSE',
 	'arguments': 'ARGS',
 	'Instructions' : 'INSTRUCTIONS',
+	'integer' : 'INTEGER',
 
 	#inbuilt methods
 	'Screensay' : 'SCREENSAY',
@@ -161,7 +163,9 @@ def t_IF_NONE_CONDITION(t):
 def t_ELSE(t):
 	r'[Ee]lse'
 	return t
-
+def t_A_AN(t):
+	r'[Aa]n'
+	return t
 def t_POSS(t):
 	r'\'(s)?'
 	return t
@@ -278,7 +282,7 @@ class IntTok(LiteralToken):
 		return self
 
 	def codegen(self):
-		return ["%d"%self.value]
+		return self.value
 
 class StringTok(LiteralToken):
 	def __init__(self, value = 0):
@@ -376,6 +380,8 @@ class ValueTok(Token):
 	pass
 class TakesTok(Token):
 	pass
+class AnTok(Token):
+	pass
 class OrTok(Token):
 	pass
 class AndTok(Token):
@@ -403,7 +409,8 @@ class WithTheArgsTok(Token):
 class PassingInTheArgsTok(Token):
 	pass
 
-
+class IntegerTypeTok(Token):
+	pass
 
 #Statement tokens
 class ReturnTok(Token):
@@ -427,41 +434,59 @@ class ReturnTok(Token):
 
 
 class Create_A_New_VarTok(Token):
-	"""Create a new variable: x."""
+	"""Create a new variable x, an integer."""
 
 	def __init__(self, value = 0):
 		self.value = value
 		self.varname = None
+		self.vartype = None
 
 	def statementd(self):
 		advance(Create_A_New_VarTok)
-		advance(ColonTok)
 		varname_list = []
 		while isinstance(token, NameTok):
 			varname_list.append(token.value)
 			advance()
 		new_varname = " ".join(varname_list)
 		self.varname = new_varname
+		advance(CommaTok)
+		advance(AnTok)
+		if isinstance(token, IntegerTypeTok):
+			advance(IntegerTypeTok)
+			self.vartype = int
+		elif isinstance(token, StringTypeTok):
+			advance(IntegerTypeTok)
+			self.vartype = str
 		advance(PeriodTok)
 		return self
 
 	def codegen(self):
-		return ["var %s;"%self.varname]
-
+		#this goes in .data
+		#if string --> add this code to literal_list
+		if self.vartype == str:
+			literal_list.extend(["%s db ?" %self.varname])
+		#if int --> add this code to literal_list
+		if self.vartype == int:
+			literal_list.extend(["%s db 0" %self.varname])
+		
+		return [] #so something is returned
+		
+  #mylen equ $-mymsg 
 
 	def eval(self, env):
 		#create a new variable in the env dict		
 		env[self.varname] = None
-		#print ">>Added %r to env dict" %self.varname
+		print ">>Added %r to env dict" %self.varname
 
 	def __repr__(self):
-		return "(%s): self.varname = %s" %(self.__class__.__name__, self.varname)
+		return "(%s): .varname = %s | .type = %s" %(self.__class__.__name__, self.varname, self.vartype)
 
 class SetTok(Token):
 	def __init__(self, value = 0):
 		self.value = value
 		self.varname = None
 		self.varvalue = None
+		self.vartype = None
 
 	def statementd(self):
 		advance(SetTok)
@@ -475,7 +500,13 @@ class SetTok(Token):
 		advance(PossTok)
 		advance(ValueTok)
 		advance(ToTok)
-		if not (isinstance(token, IntTok) or isinstance(token, StringTok) or isinstance(token, NameTok)):
+
+		#cannot currently set value to another variable TO DO FOR LATER
+		if isinstance(token, IntTok):
+			self.vartype = int
+		elif isinstance(token, StringTok):
+			self.vartype = str
+		else:
 			raise SyntaxError ("Expected a value for the variable %s, but got incompatible type") %self.varname
 		new_varvalue = statement()
 		self.varvalue = new_varvalue
@@ -483,11 +514,13 @@ class SetTok(Token):
 		return self
 	
 	def codegen(self):
-		pass
-		# results = self.varvalue.codegen()
+		
+		value = self.varvalue.codegen()
 
-		# return ["%s = %s;"%(self.varname, results[0])]
-		# not sure what's going on here
+		commands = [
+		"mov byte [%s], %s" %(self.varname, value)] 
+
+		return commands
 
 	def eval(self, env):
 		if env.has_key(self.varname) == False:
@@ -496,7 +529,7 @@ class SetTok(Token):
 		#print ">>Set env dict[%r]: %r. Env is now %r" %(self.varname, self.varvalue, env)
 		
 	def __repr__(self):
-		return "(%s): .varname = %s | .varvalue = %s " %(self.__class__.__name__, self.varname, self.varvalue)
+		return "(%s): .varname = %s | .varvalue = %s | .vartype = %s " %(self.__class__.__name__, self.varname, self.varvalue, self.vartype)
 
 class DefineNewFuncTok(Token):
 	"""Define a new function num apples, which takes 3 arguments: X, Y, and Z. 
@@ -786,7 +819,6 @@ class WhileTheConditionTok(Token):
 		advance(WhileTheConditionTok)
 		new_loop_no = loop_count
 		self.label = "loop_%d" %new_loop_no
-		print self.label
 		new_condition = statement()
 		self.condition = new_condition
 		advance(CommaTok)
@@ -809,17 +841,27 @@ class WhileTheConditionTok(Token):
 
 	def codegen(self):
 		
-		#self.condition.codegen()
-		#
-		commands = [
-		"mov I, 0",
-		"cmp I, 100",
-		"jge WhileDone",
-		"inc I",
-		"jmp WhileLp",
+		# while_condition = self.condition.codegen()
+		
+		#look up the value of the variable
+		# commands = [
+		# "mov X, 0",
+		# "cmp I, 100",
+		# "jge WhileDone",
+		# "inc I",
+		# "jmp WhileLp"
+		# ]
 
-		]
 
+		# mov eax, 0
+		# mov ebx, 0
+		# cmp eax, ebx
+		# je loop_0
+		# jmp loop_0
+
+		#return commands
+
+		return []
 #inbuilt methods
 class ScreenSayTok(Token):
 	def __init__(self, value = 0):
@@ -1080,11 +1122,12 @@ token_map = {
 	"POSS" : PossTok,
 
 
-# reserved words:
+	# reserved words:
 	"TRUE" : TrueTok,
 	"FALSE" : FalseTok,
 	"THISIS" : ThisIsTok,
 	"ELSE" : ElseTok,
+	"A_AN" : AnTok,
 	"OR" : OrTok,
 	"AND" : AndTok,
 	"IT" : ItTok,
@@ -1093,6 +1136,8 @@ token_map = {
 	"VALUE" : ValueTok,
 	"ARGS" : ArgumentsTok,
 	"INSTRUCTIONS" : InstructionsTok,
+
+	"INTEGER" : IntegerTypeTok,
 
 
 	#reserved phrases:
@@ -1224,14 +1269,14 @@ def main():
 		source = raw_input(">What would you like to parse? ")
 	
 	lex_tokens = make_lex_tokens(source)
-	# print "\n\n\nMAIN LEXING"
-	# print "-----Here are the lex tokens you ordered!"
-	# print lex_tokens
+	print "\n\n\nMAIN LEXING"
+	print "-----Here are the lex tokens you ordered!"
+	print lex_tokens
 	
 	class_tokens = make_class_tokens(lex_tokens)
-	# print "\nMAIN CLASS TOKENIZING"
-	# print"-----These class tokens are steaming hot!"
-	# print class_tokens
+	print "\nMAIN CLASS TOKENIZING"
+	print"-----These class tokens are steaming hot!"
+	print class_tokens
 	
 	#parse the program
 	#print "\nMAIN PARSING" 
@@ -1292,8 +1337,8 @@ def main():
 	print "\n\n\n>>> Assembly Code------------------------------->\n"
 	for codelet in code:
 		print codelet
-	# for data in footer_data:
-	# 	print data
+	for data in footer_data:
+		print data
 	print "\n-----------------"
 	print ">>> Compilation complete\n\n"
 	
