@@ -119,7 +119,7 @@ reserved = {
 tokens = token_names + list(reserved.values())
 
 # Token functions-----
-t_STRING = r'".*"'
+t_STRING = r'"[^"]*"'
 
 # math operators
 t_ADD_OP = r'\+'
@@ -631,7 +631,6 @@ class IfTheConditionTok(Token):
 		advance(IfTheConditionTok)
 		new_if_no = if_count
 		self.label = "if_%d" %new_if_no
-		print "self.label", self.label
 		if_count+=1
 		new_condition = statement()
 		self.condition = new_condition
@@ -644,9 +643,8 @@ class IfTheConditionTok(Token):
 		advance(RCurlyTok)
 		advance(PeriodTok)
 		if isinstance(token, ElseIfTok):
-			advance(ElseIfTok)
+			advance(ElseIfTok) 
 			self.elseif_label = "elseif_%d" % new_if_no
-			print "self.elseif_label", self.elseif_label
 			new_condition = statement()
 			self.elseif_cond = new_condition
 			advance(CommaTok)
@@ -660,7 +658,6 @@ class IfTheConditionTok(Token):
 		if isinstance(token, ElseTok):
 			advance(ElseTok)
 			self.else_label = "else_%d" %new_if_no
-			print "self.else_label", self.else_label
 			advance(CommaTok)
 			advance(FollowTheseInstructionsTok)
 			advance(ColonTok)
@@ -694,11 +691,75 @@ class IfTheConditionTok(Token):
 	def __repr__(self):
 		return "(%s): self.condition = %s, self.true_block = %s, self.else_block = %s " %(self.__class__.__name__, self.condition, self.true_block, self.else_block)
 	def codegen(self):
-		return ["%s" %self.label]
+
+		# MOV EAX, 2
+		# MOV EBX, 3
+		# CMP EAX, EBX
 		
+		# JG IF_TRUE_BLOCK1
+		# MOV EAX, 7
+		# MOV EBX, 6
+		# CMP EAX, EBX
+		# JL ELSE_IF_BLOCK1
+		# JMP ELSE1
 
+		# IF_TRUE_BLOCK1:
+		# MOV ECX, 100
+		# JMP END_IF1
 
+		# ELSE_IF_BLOCK1:
+		# MOV ECX, 200
+		# JMP END_IF1
 
+		# ELSE1:
+		# MOV ECX, 300
+		# END_IF1:
+	
+		commands = []
+		#commands for the if condition
+		if_cond_commands = [
+		"; if_cond commands",
+		"MOV EAX,  %s" % self.condition.first.value,
+		"MOV EBX, %s" % self.condition.second.value,
+		"CMP EAX, EBX"]
+		
+		commands.extend(if_cond_commands) #add if cond commands to commands
+
+		# add dif comparison line for different operators
+		# these commands make it so that it jumps to the if block
+		if isinstance(self.condition, GreaterThanOpTok):
+			commands.extend(["JG %s" % self.label]) #jump to ifblocklabel
+		elif isinstance(self.condition, LessThanOpTok):
+			commands.extend(["JL %s" % self.label])
+		elif isinstance(self.condition, IsEqualToTok):
+			commands.extend (["JE %s" % self.label])
+		#add elseif commands
+		if self.elseif_block != None:
+			#else if conditional code
+			elseif_cond_commands = [
+			";else_if conditional commands",
+			"MOV EAX, %s" % self.elseif_cond.first.value, #else
+			"MOV EBX, %s" % self.elseif_cond.second.value,
+			"CMP EAX, EBX",
+			]
+			commands.extend(elseif_cond_commands)
+			if isinstance(self.elseif_cond, GreaterThanOpTok):
+				commands.extend(["JG %s" % self.elseif_label]) #jump to ifblocklabel
+			elif isinstance(self.elseif_cond, LessThanOpTok):
+				commands.extend(["JL %s" % self.elseif_label])
+			elif isinstance(self.elseif_cond, IsEqualToTok):
+				commands.extend (["JE %s" % self.elseif_label])
+
+		#else block commands
+		if self.else_block != None:
+			#jump to else
+			else_command = ["JMP %s" %self.else_label]
+			commands.extend(else_command)
+		
+		for command in commands:
+			print command
+
+		return []
 
 class WhileTheConditionTok(Token):
 	"""While the condition x>4 is equal to true, follow these instructions: {block}"""
@@ -734,6 +795,19 @@ class WhileTheConditionTok(Token):
 				statement.eval() 
 	def __repr__(self):
 		return "(%s): self.condition = %s, self.block = %s" %(self.__class__.__name__, self.condition, self.block)
+
+	def codegen(self):
+		
+		#self.condition.codegen()
+		#
+		commands = [
+		"mov I, 0",
+		"cmp I, 100",
+		"jge WhileDone",
+		"inc I",
+		"jmp WhileLp",
+
+		]
 
 #inbuilt methods
 class ScreenSayTok(Token):
@@ -800,7 +874,6 @@ class Program:
 		for statement in self.children:
 			code.extend(statement.codegen())
 		return code
-
 
 #eval classes
 class Scope:
@@ -909,6 +982,13 @@ class GreaterThanOpTok(BinaryOpToken):
 			print ">>> Nope, %s is not greater than %s" % (self.first, self.second)
 			return False
 
+	def codegen(self):
+		#pretend there are just integers as self.first and self.second
+		# MOV EAX, self.first
+		# MOV EBX, self.second
+		# CMP EAX, EBX
+		return self
+
 class LessThanOpTok(BinaryOpToken):
 	lbp = 40
 	def leftd(self, left):
@@ -936,6 +1016,15 @@ class IsEqualToTok(BinaryOpToken):
 		else:
 			print ">>> Nope, %s is greater than %s" % (self.first, self.second)
 			return False
+
+	def codegen(self):
+		#load self.first.codegen()
+		#move self.first.codegen() into a register
+		#self.second.codegen()
+		#load self.second.codegen()
+		#compare self.first and self.second
+		pass
+
 
 # create class token list and token map dict ----------------------------------
 class_tokens = []
@@ -1114,14 +1203,14 @@ def main():
 		source = raw_input(">What would you like to parse? ")
 	
 	lex_tokens = make_lex_tokens(source)
-	#print "\n\n\nMAIN LEXING"
+	# print "\n\n\nMAIN LEXING"
 	# print "-----Here are the lex tokens you ordered!"
-	#print lex_tokens
+	# print lex_tokens
 	
 	class_tokens = make_class_tokens(lex_tokens)
-	#print "\nMAIN CLASS TOKENIZING"
+	# print "\nMAIN CLASS TOKENIZING"
 	# print"-----These class tokens are steaming hot!"
-	#print class_tokens
+	# print class_tokens
 	
 	#parse the program
 	#print "\nMAIN PARSING" 
@@ -1155,11 +1244,13 @@ def main():
 	]
 
 
-	code = header + program.codegen()
-	
+	#code = header + program.codegen()
+	code = program.codegen() #taking out headers and footers for now
+
 	base_file = filename.split(".")[0]
 	f = open("%s.asm"%base_file, "w")
 	
+	print "code", code
 	for line in code:
 		f.write(line + "\n")
 
@@ -1169,10 +1260,10 @@ def main():
 	"section .data\n"
 	]
 
-	footer_data = footer + data1 + literal_list
+	# footer_data = footer + data1 + literal_list
 
-	for line in footer_data:
-		f.write(line + "\n")
+	# for line in footer_data:
+	# 	f.write(line + "\n")
 
 	
 
@@ -1183,8 +1274,8 @@ def main():
 	print "\n\n\n>>> Assembly Code------------------------------->\n"
 	for codelet in code:
 		print codelet
-	for data in footer_data:
-		print data
+	# for data in footer_data:
+	# 	print data
 	print "\n-----------------"
 	print ">>> Compilation complete\n\n"
 	
