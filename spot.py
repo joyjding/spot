@@ -691,10 +691,6 @@ class IfTheConditionTok(Token):
 	def __repr__(self):
 		return "(%s): self.condition = %s, self.true_block = %s, self.else_block = %s " %(self.__class__.__name__, self.condition, self.true_block, self.else_block)
 	def codegen(self):
-
-		# MOV EAX, 2
-		# MOV EBX, 3
-		# CMP EAX, EBX
 		
 		# JG IF_TRUE_BLOCK1
 		# MOV EAX, 7
@@ -716,33 +712,26 @@ class IfTheConditionTok(Token):
 		# END_IF1:
 	
 		commands = []
-		#commands for the if condition
-		if_cond_commands = [
-		"; if_cond commands",
-		"MOV EAX,  %s" % self.condition.first.value,
-		"MOV EBX, %s" % self.condition.second.value,
-		"CMP EAX, EBX"]
-		
-		commands.extend(if_cond_commands) #add if cond commands to commands
 
-		# add dif comparison line for different operators
-		# these commands make it so that it jumps to the if block
+		# add if cond code
+		if_cond_commands = self.condition.codegen()
+		commands.extend(if_cond_commands)
+
+		# add dif jump comparisons --> if block
 		if isinstance(self.condition, GreaterThanOpTok):
 			commands.extend(["JG %s" % self.label]) #jump to ifblocklabel
 		elif isinstance(self.condition, LessThanOpTok):
 			commands.extend(["JL %s" % self.label])
 		elif isinstance(self.condition, IsEqualToTok):
 			commands.extend (["JE %s" % self.label])
-		#add elseif commands
+		
+
+		#add elseif cond code
 		if self.elseif_block != None:
-			#else if conditional code
-			elseif_cond_commands = [
-			";else_if conditional commands",
-			"MOV EAX, %s" % self.elseif_cond.first.value, #else
-			"MOV EBX, %s" % self.elseif_cond.second.value,
-			"CMP EAX, EBX",
-			]
+			elseif_cond_commands = self.elseif_cond.codegen()
 			commands.extend(elseif_cond_commands)
+
+			#add dif jump comparisons --> else if block
 			if isinstance(self.elseif_cond, GreaterThanOpTok):
 				commands.extend(["JG %s" % self.elseif_label]) #jump to ifblocklabel
 			elif isinstance(self.elseif_cond, LessThanOpTok):
@@ -755,11 +744,26 @@ class IfTheConditionTok(Token):
 			#jump to else
 			else_command = ["JMP %s" %self.else_label]
 			commands.extend(else_command)
-		
-		for command in commands:
-			print command
 
-		return []
+		#add true block code
+		true_block = []
+		for block in self.true_block:
+			true_block.extend(block.codegen())
+		commands.extend(true_block)
+
+		#add else if true block
+		else_if_block = []
+		for block in self.elseif_block:
+			else_if_block.extend(block.codegen())
+		commands.extend(else_if_block)
+		
+		#add else true block
+		else_block = []
+		for block in self.else_block:
+			else_block.extend(block.codegen())
+		commands.extend(else_block)
+
+		return commands
 
 class WhileTheConditionTok(Token):
 	"""While the condition x>4 is equal to true, follow these instructions: {block}"""
@@ -837,7 +841,7 @@ class ScreenSayTok(Token):
 		# string = self.stringtok.codegen() #receive the string
 		# return ["printf %s] % self.string_label
 		commands = [
-		"; prepare the arguments",
+		"\n; prepare the arguments",
 		"push dword %s 			; string length arg" %self.stringtok.len,
 		"push dword %s          	; string to print arg" %self.stringtok.label,
 		"push dword 1           		; file descriptor value",
@@ -983,11 +987,13 @@ class GreaterThanOpTok(BinaryOpToken):
 			return False
 
 	def codegen(self):
-		#pretend there are just integers as self.first and self.second
-		# MOV EAX, self.first
-		# MOV EBX, self.second
-		# CMP EAX, EBX
-		return self
+		commands = [
+		"; greater than comparison of %s > %s" % (self.first.value, self.second.value),
+		"MOV EAX,  %s" % self.first.value,
+		"MOV EBX, %s" % self.second.value,
+		"CMP EAX, EBX"]
+		
+		return commands
 
 class LessThanOpTok(BinaryOpToken):
 	lbp = 40
@@ -1002,6 +1008,14 @@ class LessThanOpTok(BinaryOpToken):
 		else:
 			print ">>> Nope, %s is not greater than %s" % (self.first, self.second)
 			return False
+	def codegen(self):
+		commands = [
+			"; less than comparison of %s < %s " % (self.first.value, self.second.value),
+			"MOV EAX, %s" % self.first.value, #else
+			"MOV EBX, %s" % self.second.value,
+			"CMP EAX, EBX",
+			]
+		return commands
 
 class IsEqualToTok(BinaryOpToken):
 	lbp = 40
@@ -1250,7 +1264,6 @@ def main():
 	base_file = filename.split(".")[0]
 	f = open("%s.asm"%base_file, "w")
 	
-	print "code", code
 	for line in code:
 		f.write(line + "\n")
 
