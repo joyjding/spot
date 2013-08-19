@@ -78,13 +78,14 @@ token_names = [
 	'NAME',
 
 	'A_AN',
-	'INDENT',
+	#'INDENT',
 	'ELSE',
 	'ELSE_IF_THE_CONDITION',
 	'SET',
 	'RETURN',
 	'IS_EQUAL_TO',
 	'WHICH_TAKES',
+	'ARGUMENTS',
 	'IF_THE_CONDITION',
 	'CREATE_NEW_VARIABLE',
 	'DEFINE_NEW_FUNCTION',
@@ -100,6 +101,7 @@ token_names = [
 
 reserved = {
 	'this is' : 'THISIS',
+	'by' : 'BY',
 	'while' : 'WHILE',
 	'or' : 'OR',
 	'and' : 'AND',
@@ -109,9 +111,10 @@ reserved = {
 	'value' : 'VALUE',
 	'true' : 'TRUE',
 	'false' : 'FALSE',
-	'arguments': 'ARGS',
 	'Instructions' : 'INSTRUCTIONS',
 	'integer' : 'INTEGER',
+	'Increase' : 'INCREASE',
+	'modulus' : 'MODULUS',
 
 	#inbuilt methods
 	'Screensay' : 'SCREENSAY',
@@ -138,14 +141,14 @@ t_PERIOD = r'\.'
 t_COLON = r':'
 t_SEMICOLON = r';'
 t_BANG = r'!'
-t_INDENT = r'\t'
+# t_INDENT = r'\t' #v2 feature
 t_LCURLY = r'{'
 t_RCURLY = r'}'
 t_SINGLEQ = r'\''
 t_DOUBLEQ = r'\"'
 
 # A string containing ignored chars
-t_ignore = ' '
+t_ignore = ' \t'
 
 # more complex lexing functions
 def t_INT(t):
@@ -172,6 +175,10 @@ def t_POSS(t):
 
 def t_WHICH_TAKES(t):
 	r'which\stakes'
+	return t
+
+def t_ARGUMENTS(t):
+	r'argument(s)?'
 	return t
 
 def t_IS_EQUAL_TO(t):
@@ -215,7 +222,7 @@ def t_WITH_THE_ARGS(t):
 	r'with\sthe\sarguments'
 	return t
 def t_PASSING_IN_THE_ARGS(t):
-	r'passing\sin\s(the)?\sarguments'
+	r'passing\sin\s(the)?\sargument(s)?'
 	return t
 
 # No return value. Token discarded
@@ -344,7 +351,11 @@ class NameTok(LiteralToken):
 	lbp = 10
 
 	def eval(self, env):
-		return env[self.value]
+		namekey = self.value
+		namevalue = env['%s' %namekey]
+		#print ">>>Returning %s, the value of %s" % (namevalue, namekey)
+		return namevalue
+
 	def codegen(self):
 		return "[%s]" %self.value #this is the issue
 
@@ -383,6 +394,8 @@ class ValueTok(Token):
 class TakesTok(Token):
 	pass
 class AnTok(Token):
+	pass
+class ByTok(Token):
 	pass
 class OrTok(Token):
 	pass
@@ -431,7 +444,7 @@ class ReturnTok(Token):
 		return self
 	def eval(self, env):
 		result = self.expr.eval(env)
-		print ">>Returning to you: %s" %result
+		print ">Returning to you: %s" %result
 		return result
 	def __repr__(self):
 		return "(%s): .expr = %s" %(self.__class__.__name__, self.expr)
@@ -453,6 +466,7 @@ class Create_A_New_VarTok(Token):
 			advance()
 		new_varname = " ".join(varname_list)
 		self.varname = new_varname
+		print 10, self.varname
 		advance(CommaTok)
 		advance(AnTok)
 		if isinstance(token, IntegerTypeTok):
@@ -474,13 +488,12 @@ class Create_A_New_VarTok(Token):
 			literal_list.extend(["%s dd 0" %self.varname])
 			#standard for integers to get 4 bytes
 		return [] #so something is returned
-		
-  #mylen equ $-mymsg 
 
 	def eval(self, env):
 		#create a new variable in the env dict		
+		print "I'm here!"
 		env[self.varname] = None
-		print ">>Added %r to env dict" %self.varname
+		print ">>Added %r to env dict. env: %s" %(self.varname, env)
 
 	def __repr__(self):
 		return "(%s): .varname = %s | .type = %s" %(self.__class__.__name__, self.varname, self.vartype)
@@ -516,7 +529,7 @@ class SetTok(Token):
 		self.varvalue = new_varvalue
 		advance(PeriodTok)
 		return self
-	
+
 	def codegen(self):
 		
 		value = self.varvalue.codegen()
@@ -529,14 +542,18 @@ class SetTok(Token):
 	def eval(self, env):
 		if env.has_key(self.varname) == False:
 			raise SyntaxError("This variable has not been created yet")
-		env[self.varname] = self.varvalue.eval(env)
-		#print ">>Set env dict[%r]: %r. Env is now %r" %(self.varname, self.varvalue, env)
+		varvalue = self.varvalue.eval(env)
+		env[self.varname] = varvalue
+		print ">> Set env dict[%r]: %r. Env is now %r" %(self.varname, varvalue, env)
 		
 	def __repr__(self):
 		return "(%s): .varname = %s | .varvalue = %s | .vartype = %s " %(self.__class__.__name__, self.varname, self.varvalue, self.vartype)
 
 class DefineNewFuncTok(Token):
-	"""Define a new function num apples, which takes 3 arguments: X, Y, and Z. 
+	"""Define a new function fizz buzz, which takes 1 argument: end number.
+	When called, it follows these instructions: {}.
+
+	Define a new function num apples, which takes 3 arguments: X, Y, and Z. 
 	When called, it follows these instructions: {}."""	
 
 	def __init__(self, value = 0):
@@ -555,22 +572,32 @@ class DefineNewFuncTok(Token):
 			advance()
 		new_function_name = " ".join(f_name_list)
 		self.function_name = new_function_name	
-		#for saving arguments, if there are any
+		#for saving arguments, if there are any. Currently can only save one arg
 		if isinstance(token, CommaTok):
 			advance(CommaTok)
 			advance(WhichTakesTok)
 			new_num = advance(IntTok)
 			self.num_args = new_num.value #number of arguments
+			advance(IntegerTypeTok) #currently arguments can only be integers
 			advance(ArgumentsTok)
 			advance(ColonTok)
-			while not isinstance(token, AndTok):
-				new_arg = advance()
-				#easy hack to get values -->later, might need types
-				self.args.append(new_arg.value)
-				advance(CommaTok)
-			advance(AndTok)
-			last_arg = advance()
-			self.args.append(last_arg.value)
+			new_var_bit = []
+			while isinstance(token, NameTok): 
+				print "new_var_bit", new_var_bit
+				new_var_bit.append(token.value)
+				advance()
+			new_var = " ".join(new_var_bit)
+			self.args.append(new_var)
+
+			# put back in later, when I'll have multiple arguments
+			# while not isinstance(token, AndTok):
+			# 	new_arg = advance()
+			# 	#easy hack to get values -->later, might need types
+			# 	self.args.append(new_arg.value)
+			# 	advance(CommaTok)
+			# advance(AndTok)
+			# last_arg = advance()
+			# self.args.append(last_arg.value)
 		advance(PeriodTok)
 		advance(WhenCalledTok)
 		advance(CommaTok)
@@ -593,6 +620,7 @@ class DefineNewFuncTok(Token):
 		return "(%s): .function_name = %s | .num_args = %s | .args = %s" %(self.__class__.__name__, self.function_name, self.num_args, self.args) 
 
 class RunTheFuncTok(Token):
+	#changing it to only take one argument. v2 - multiple args
 	"""Run the function numapples, passing in the arguments 4, 5, and 6."""
 	def __init__(self, value = 0):
 		self.value = value
@@ -612,27 +640,33 @@ class RunTheFuncTok(Token):
 		if isinstance(token, CommaTok):
 			advance(CommaTok)
 			advance(PassingInTheArgsTok)
-			while not isinstance(token, AndTok):
-				new_arg = advance()
-				self.args.append(new_arg.value)
-				#hack to get just the values --> might need types later
-				advance(CommaTok)
-			advance(AndTok)
-			last_arg = advance()
-			self.args.append(last_arg.value)
+			new_arg = advance(IntTok)
+			self.args = new_arg
+			
+			#commenting out multiple args code
+			# while not isinstance(token, AndTok):
+			# 	new_arg = advance()
+			# 	self.args.append(new_arg.value)
+			# 	#hack to get just the values --> might need types later
+			# 	advance(CommaTok)
+			# advance(AndTok)
+			# last_arg = advance()
+			# self.args.append(last_arg.value)
 		advance(PeriodTok)			
 		return self
 	def eval(self, env):
-		
 		#check if the fn has been defined
 		if env.has_key(self.func_name) == False:
 			raise SyntaxError("This function has not been defined yet.")
 		#set fn to be the function object
 		fn = env[self.func_name]
+		args_passed_in = self.args.eval(env)
 		
 		#create a dictionary, with args and values together
-		new_env = zip(fn.args, self.args)
+
+		new_env = zip(fn.args, [args_passed_in])
 		env = dict(new_env)
+		
 		print ">> Created a new environment:", env
 
 		for statement in fn.block:
@@ -706,24 +740,25 @@ class IfTheConditionTok(Token):
 		return self
 
 	def eval(self, env):	
-		if self.condition.eval() == True:
-			print ">> The if condition %s is true -->executing if block" % self.condition
+		if self.condition.eval(env) == True:
+			print "\n>> The if condition %s is true -->executing if block" % self.condition
 			for statement in self.true_block:
-				statement.eval()
-		elif self.condition.eval() == False:
-			print ">> The if condition %s is not true-->looking for else if or else" % self.condition
-			if (self.elseif_cond == True and self.elseif_block != None):
-				print ">> Else if condition %s is true-->executing else if block"
+				statement.eval(env)
+		elif self.condition.eval(env) == False:
+			print "\n>> The if condition %s is not true-->looking for else if or else" % self.condition
+
+			if (self.elseif_cond.eval(env) == True and self.elseif_block != None):
+				print "\n>> Else if condition %s is true-->executing else if block"
 				for statement in self.elseif_block:
-					statement.eval()
-			if (self.elseif_cond == False and self.else_block != None):
-				print ">> The else if condition %s is not true-->executing else block"
+					statement.eval(env)
+			if (self.elseif_cond.eval(env) == False and self.else_block != None):
+				print "\n>> The else if condition %s is not true-->executing else block"
 				for statement in self.else_block:
-					statement.eval()
+					statement.eval(env)
 			if (self.elseif_block == None and self.else_block != None):
-				print ">> Previous conditions were not true-->Executing the else condition"
+				print "\n>> Previous conditions were not true-->Executing the else condition"
 				for statement in self.else_block:
-					statement.eval()
+					statement.eval(env)
 
 	def __repr__(self):
 		return "(%s): self.condition = %s, self.true_block = %s, self.else_block = %s " %(self.__class__.__name__, self.condition, self.true_block, self.else_block)
@@ -836,10 +871,11 @@ class WhileTheConditionTok(Token):
 		return self		
 	
 	def eval(self, env):
-		while self.condition.eval() == True:
+		while self.condition.eval(env) == True:
 			print ">>> Yup, the condition is still true, continuing loop"
 			for statement in self.block:
-				statement.eval() 
+				statement.eval(env)
+		print ">>> The while condition is now false, ending loop. Seeya!" 
 	def __repr__(self):
 		return "(%s): self.condition = %s, self.block = %s" %(self.__class__.__name__, self.condition, self.block)
 
@@ -1032,7 +1068,7 @@ class GreaterThanOpTok(BinaryOpToken):
 		self.second = expression(40)
 		return self
 	def eval(self, env):
-		if self.first.eval() > self.second.eval():
+		if self.first.eval(env) > self.second.eval(env):
 			print ">>> Yes, %s is greater than %s" % (self.first, self.second)
 			return True
 		else:
@@ -1057,7 +1093,7 @@ class LessThanOpTok(BinaryOpToken):
 		self.second = expression(40)
 		return self
 	def eval(self, env):
-		if self.first.eval() < self.second.eval():
+		if self.first.eval(env) < self.second.eval(env):
 			print ">>> Yes, %s is less than %s" % (self.first, self.second)
 			return True
 		else:
@@ -1079,7 +1115,7 @@ class IsEqualToTok(BinaryOpToken):
 		self.second = expression(40)
 		return self
 	def eval(self, env):
-		if self.first.eval() == self.second.eval():
+		if self.first.eval(env) == self.second.eval(env):
 			print ">>> Yes, %s is equal to %s" % (self.first, self.second)
 			return True
 		else:
@@ -1093,6 +1129,62 @@ class IsEqualToTok(BinaryOpToken):
 		#load self.second.codegen()
 		#compare self.first and self.second
 		pass
+
+class ModulusTok(BinaryOpToken):
+	lbp = 70
+	def leftd(self, left):
+		self.first = left
+		self.second = expression(70)
+		return self
+	def eval(self, env):
+		#print ">>> %r modulus %r" %(self.first, self.second)
+		return self.first.eval(env) % self.second.eval(env)
+
+class IncreaseTok(Token):
+	def __init__(self, value = 0):
+		Token.__init__(self)
+		self.first = None
+		self.second = None
+	
+	def statementd(self):
+		advance(IncreaseTok)
+		new_var = advance(NameTok)
+		self.first = new_var
+		advance(PossTok)
+		advance(ValueTok)
+		advance(ByTok)
+		new_increment = advance(IntTok)
+		self.second = new_increment
+		advance(PeriodTok)
+		return self
+
+	def eval(self, env):
+
+		variable = self.first.value
+		prev_value = self.first.eval(env)
+		
+		if env.has_key(variable) == False:
+			raise SyntaxError("This variable has not been created yet")
+		
+		if type(prev_value) != int:
+			raise SyntaxError("Must be an integer to increment")
+
+		env['%s' %variable] = prev_value + 1
+
+	def __repr__(self):
+		return "(%s, %r): self.first = %s, self.second = %s" %(self.__class__.__name__, self.value, self.first, self.second)
+
+	def codegen(self):
+		#we're only going to have increment go by 1
+		# print "self.first.codegen", self.first.codegen()
+		# print "self.second.codegen", self.second.codegen()
+		if self.second.codegen() == 1: 
+			commands = ["inc dword %s" % self.first.codegen()]
+		
+		return commands
+
+
+
 
 
 # create class token list and token map dict ----------------------------------
@@ -1112,6 +1204,9 @@ token_map = {
 #comparitors
 	"GREATER_THAN_OP" : GreaterThanOpTok,
 	"LESS_THAN_OP" : LessThanOpTok,
+
+#incrementer:
+	"INCREASE" : IncreaseTok,
 
 #punctuation
 	"COMMA" : CommaTok,
@@ -1134,16 +1229,20 @@ token_map = {
 	"THISIS" : ThisIsTok,
 	"ELSE" : ElseTok,
 	"A_AN" : AnTok,
+	"BY" : ByTok,
 	"OR" : OrTok,
 	"AND" : AndTok,
 	"IT" : ItTok,
 	"TO" : ToTok,
 	"RETURN" : ReturnTok,
 	"VALUE" : ValueTok,
-	"ARGS" : ArgumentsTok,
+	#"ARGUMENT" #wait a minute here checking on args
+	"ARGUMENTS" : ArgumentsTok,
 	"INSTRUCTIONS" : InstructionsTok,
 
 	"INTEGER" : IntegerTypeTok,
+	"INCREASE" : IncreaseTok,
+	"MODULUS" : ModulusTok,
 
 
 	#reserved phrases:
@@ -1292,61 +1391,61 @@ def main():
 	
 	#eval the program
 	#print "\n-----Here are the results of your eval!"
-	# program.eval(globalenv)
-	header = [
-		"; < Woof! A Spot --> NASM file for your compiling pleasure /(^.^)\ >",
-		"\n; ----------------",
-		"section .text",
-		"global mystart ;make the main function externally visible",
-		"; ----------------",
-		";START OF PROGRAM\n",
-		"mystart:\n",
-		]
+	print program.eval(globalenv)
+	# header = [
+	# 	"; < Woof! A Spot --> NASM file for your compiling pleasure /(^.^)\ >",
+	# 	"\n; ----------------",
+	# 	"section .text",
+	# 	"global mystart ;make the main function externally visible",
+	# 	"; ----------------",
+	# 	";START OF PROGRAM\n",
+	# 	"mystart:\n",
+	# 	]
 
-	footer = [
-		"; --------------------------------------------",
-		"; EXIT THE PROGRAM\n",
-		"; prepare the argument for the sys call to exit",
-		"push dword 0 			; exit status returned to OS",
-		"\n",
-		"; make the call to sys call to exit",
-		"mov eax, 0x1 			; sys call no. for exit",
-		"sub esp, 4 			; give it some extra space",
-		"int 0x80 			; make the system call"
-	]
+	# footer = [
+	# 	"; --------------------------------------------",
+	# 	"; EXIT THE PROGRAM\n",
+	# 	"; prepare the argument for the sys call to exit",
+	# 	"push dword 0 			; exit status returned to OS",
+	# 	"\n",
+	# 	"; make the call to sys call to exit",
+	# 	"mov eax, 0x1 			; sys call no. for exit",
+	# 	"sub esp, 4 			; give it some extra space",
+	# 	"int 0x80 			; make the system call"
+	# ]
 
-	code = header + program.codegen()
-	# code = program.codegen() #taking out headers and footers for now
+	# code = header + program.codegen()
+	# # code = program.codegen() #taking out headers and footers for now
 
-	base_file = filename.split(".")[0]
-	f = open("%s.asm"%base_file, "w")
+	# base_file = filename.split(".")[0]
+	# f = open("%s.asm"%base_file, "w")
 	
-	for line in code:
-		f.write(line + "\n")
+	# for line in code:
+	# 	f.write(line + "\n")
 
-	#data and footer section
-	data1 = [
-	";----------\n",
-	"section .data\n"
-	]
+	# #data and footer section
+	# data1 = [
+	# ";----------\n",
+	# "section .data\n"
+	# ]
 
-	footer_data = footer + data1 + literal_list
+	# footer_data = footer + data1 + literal_list
 
-	for line in footer_data:
-		f.write(line + "\n")
+	# for line in footer_data:
+	# 	f.write(line + "\n")
 
 	
-	#close the file
-	f.close();
+	# #close the file
+	# f.close();
 	
-	#print out in the terminal
-	print "\n\n\n>>> Assembly Code------------------------------->\n"
-	for codelet in code:
-		print codelet
-	for data in footer_data:
-		print data
-	print "\n-----------------"
-	print ">>> Compilation complete\n\n"
+	# #print out in the terminal
+	# print "\n\n\n>>> Assembly Code------------------------------->\n"
+	# for codelet in code:
+	# 	print codelet
+	# for data in footer_data:
+	# 	print data
+	# print "\n-----------------"
+	# print ">>> Compilation complete\n\n"
 	
 
 if __name__ == "__main__":
