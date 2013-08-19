@@ -345,6 +345,8 @@ class NameTok(LiteralToken):
 
 	def eval(self, env):
 		return env[self.value]
+	def codegen(self):
+		return "[%s]" %self.value #this is the issue
 
 #Basic punctuation
 class CommaTok(Token):
@@ -410,7 +412,9 @@ class PassingInTheArgsTok(Token):
 	pass
 
 class IntegerTypeTok(Token):
-	pass
+	def codegen():
+		return self.value
+	
 
 #Statement tokens
 class ReturnTok(Token):
@@ -467,8 +471,8 @@ class Create_A_New_VarTok(Token):
 			literal_list.extend(["%s db ?" %self.varname])
 		#if int --> add this code to literal_list
 		if self.vartype == int:
-			literal_list.extend(["%s db 0" %self.varname])
-		
+			literal_list.extend(["%s dd 0" %self.varname])
+			#standard for integers to get 4 bytes
 		return [] #so something is returned
 		
   #mylen equ $-mymsg 
@@ -518,8 +522,8 @@ class SetTok(Token):
 		value = self.varvalue.codegen()
 
 		commands = [
-		"mov byte [%s], %s" %(self.varname, value)] 
-
+		"mov dword [%s], %s" %(self.varname, value)] 
+		#set only works for integers right now
 		return commands
 
 	def eval(self, env):
@@ -1033,15 +1037,17 @@ class GreaterThanOpTok(BinaryOpToken):
 			return True
 		else:
 			print ">>> Nope, %s is not greater than %s" % (self.first, self.second)
-			return False
 
 	def codegen(self):
+
 		commands = [
 		"; greater than comparison of %s > %s" % (self.first.value, self.second.value),
-		"MOV EAX,  %s" % self.first.value,
-		"MOV EBX, %s" % self.second.value,
-		"CMP EAX, EBX"]
-		
+
+		"MOV EAX, %s" % self.first.codegen(),
+		"MOV EBX, %s" % self.second.codegen(),
+		"CMP EAX, EBX"
+		]
+		#check to see if this works
 		return commands
 
 class LessThanOpTok(BinaryOpToken):
