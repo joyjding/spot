@@ -670,10 +670,7 @@ class RunTheFuncTok(Token):
 		print ">> Created a new environment:", env
 
 		for statement in fn.block:
-			statement.eval(env)
-		
-		#print "set env dict[%r]: %r. Env is now %r" %(self.varname, self.varvalue, env)
-		
+			statement.eval(env)		
 	def __repr__(self):
 		return "(%s): .func_name = %s | .args = %s" %(self.__class__.__name__, self.func_name, self.args) 
 
@@ -702,7 +699,7 @@ class IfTheConditionTok(Token):
 		advance(IfTheConditionTok)
 		new_if_no = if_count
 		self.labelno = "%d" %new_if_no
-		if_count+=1
+		if_count += 1
 		new_condition = statement()
 		self.condition = new_condition
 		advance(CommaTok)
@@ -763,25 +760,6 @@ class IfTheConditionTok(Token):
 	def __repr__(self):
 		return "(%s): self.condition = %s, self.true_block = %s, self.else_block = %s " %(self.__class__.__name__, self.condition, self.true_block, self.else_block)
 	def codegen(self):
-		
-		# JG IF_TRUE_BLOCK1
-		# MOV EAX, 7
-		# MOV EBX, 6
-		# CMP EAX, EBX
-		# JL ELSE_IF_BLOCK1
-		# JMP ELSE1
-
-		# IF_TRUE_BLOCK1:
-		# MOV ECX, 100
-		# JMP END_IF1
-
-		# ELSE_IF_BLOCK1:
-		# MOV ECX, 200
-		# JMP END_IF1
-
-		# ELSE1:
-		# MOV ECX, 300
-		# END_IF1:
 	
 		commands = []
 
@@ -849,7 +827,7 @@ class WhileTheConditionTok(Token):
 	
 	def __init__(self, value = 0):
 		self.value = value
-		self.label = None
+		self.labelno = None
 		self.condition = None
 		self.block = None
 
@@ -857,7 +835,7 @@ class WhileTheConditionTok(Token):
 		global loop_count
 		advance(WhileTheConditionTok)
 		new_loop_no = loop_count
-		self.label = "loop_%d" %new_loop_no
+		self.labelno = new_loop_no
 		new_condition = statement()
 		self.condition = new_condition
 		advance(CommaTok)
@@ -880,9 +858,37 @@ class WhileTheConditionTok(Token):
 		return "(%s): self.condition = %s, self.block = %s" %(self.__class__.__name__, self.condition, self.block)
 
 	def codegen(self):
+		commands = ["loop_%s" %self.labelno]
+		while_condition_list = self.condition.codegen()
+		commands.extend(while_condition_list)
 		
-		# while_condition = self.condition.codegen()
-		
+		#for the different kinds of conditions
+
+		if isinstance(self.condition, GreaterThanOpTok):
+			commands.extend(["JLE endloop_%s" % self.labelno]) #jump to ifblocklabel
+		elif isinstance(self.condition, LessThanOpTok):
+			commands.extend(["JGE endloop_%s" % self.labelno])
+		elif isinstance(self.condition, IsEqualToTok):
+			commands.extend (["JNE endloop_%s" % self.labelno])
+
+		#codegen the block
+		while_block = []
+		for block in self.block:
+			while_block.extend(block.codegen())
+
+		while_block.extend(["JMP loop_%s" %self.labelno])
+		commands.extend(while_block) #add while block commands
+
+		#add loop end
+		commands.extend(["endloop_%s" % self.labelno])
+
+
+		#while_block = ["if_%s:" % self.labelno]
+
+		print "commands"
+		for command in commands:
+			print command
+
 		#look up the value of the variable
 		# commands = [
 		# "mov X, 0",
@@ -901,7 +907,7 @@ class WhileTheConditionTok(Token):
 
 		#return commands
 
-		return []
+		return commands
 #inbuilt methods
 class ScreenSayTok(Token):
 	def __init__(self, value = 0):
@@ -1102,8 +1108,8 @@ class LessThanOpTok(BinaryOpToken):
 	def codegen(self):
 		commands = [
 			"; less than comparison of %s < %s " % (self.first.value, self.second.value),
-			"MOV EAX, %s" % self.first.value, #else
-			"MOV EBX, %s" % self.second.value,
+			"MOV EAX, %s" % self.first.codegen(), #else
+			"MOV EBX, %s" % self.second.codegen(),
 			"CMP EAX, EBX",
 			]
 		return commands
@@ -1123,12 +1129,13 @@ class IsEqualToTok(BinaryOpToken):
 			return False
 
 	def codegen(self):
-		#load self.first.codegen()
-		#move self.first.codegen() into a register
-		#self.second.codegen()
-		#load self.second.codegen()
-		#compare self.first and self.second
-		pass
+		commands = [
+			"; is equal to comparison of %s < %s " % (self.first.value, self.second.value),
+			"MOV EAX, %s" % self.first.codegen(), #else
+			"MOV EBX, %s" % self.second.codegen(),
+			"CMP EAX, EBX",
+			]
+		return commands
 
 class ModulusTok(BinaryOpToken):
 	lbp = 70
@@ -1374,78 +1381,85 @@ def main():
 		source = raw_input(">What would you like to parse? ")
 	
 	lex_tokens = make_lex_tokens(source)
-	print "\n\n\nMAIN LEXING"
-	print "-----Here are the lex tokens you ordered!"
-	print lex_tokens
+	
+	# ---lex print debugging---
+	# print "\n\n\nMAIN LEXING"
+	# print "-----Here are the lex tokens you ordered!"
+	# print lex_tokens
 	
 	class_tokens = make_class_tokens(lex_tokens)
-	print "\nMAIN CLASS TOKENIZING"
-	print"-----These class tokens are steaming hot!"
-	print class_tokens
+	
+	# ---class token print debugging---
+	# print "\nMAIN CLASS TOKENIZING"
+	# print"-----These class tokens are steaming hot!"
+	# print class_tokens
 	
 	#parse the program
-	#print "\nMAIN PARSING" 
+	# print "MAIN PARSING" 
 	# print "-----Woo! Nothing's broken yet. About to parse now!"
 	program = parse()
+	
+	## eval the program - Commented out for codegen
 	#print "\n\nON TO EVALUATION, mateys-------------->"
-	
-	#eval the program
 	#print "\n-----Here are the results of your eval!"
-	print program.eval(globalenv)
-	# header = [
-	# 	"; < Woof! A Spot --> NASM file for your compiling pleasure /(^.^)\ >",
-	# 	"\n; ----------------",
-	# 	"section .text",
-	# 	"global mystart ;make the main function externally visible",
-	# 	"; ----------------",
-	# 	";START OF PROGRAM\n",
-	# 	"mystart:\n",
-	# 	]
+	# program.eval(globalenv)
+	## end eval ##
 
-	# footer = [
-	# 	"; --------------------------------------------",
-	# 	"; EXIT THE PROGRAM\n",
-	# 	"; prepare the argument for the sys call to exit",
-	# 	"push dword 0 			; exit status returned to OS",
-	# 	"\n",
-	# 	"; make the call to sys call to exit",
-	# 	"mov eax, 0x1 			; sys call no. for exit",
-	# 	"sub esp, 4 			; give it some extra space",
-	# 	"int 0x80 			; make the system call"
-	# ]
+	##codegen##
+	header = [
+		"; < Woof! A Spot --> NASM file for your compiling pleasure /(^.^)\ >",
+		"\n; ----------------",
+		"section .text",
+		"global mystart ;make the main function externally visible",
+		"; ----------------",
+		";START OF PROGRAM\n",
+		"mystart:\n",
+		]
 
-	# code = header + program.codegen()
-	# # code = program.codegen() #taking out headers and footers for now
+	footer = [
+		"; --------------------------------------------",
+		"; EXIT THE PROGRAM\n",
+		"; prepare the argument for the sys call to exit",
+		"push dword 0 			; exit status returned to OS",
+		"\n",
+		"; make the call to sys call to exit",
+		"mov eax, 0x1 			; sys call no. for exit",
+		"sub esp, 4 			; give it some extra space",
+		"int 0x80 			; make the system call"
+	]
 
-	# base_file = filename.split(".")[0]
-	# f = open("%s.asm"%base_file, "w")
+	code = header + program.codegen()
+	# code = program.codegen() #taking out headers and footers for now
+
+	base_file = filename.split(".")[0]
+	f = open("%s.asm"%base_file, "w")
 	
-	# for line in code:
-	# 	f.write(line + "\n")
+	for line in code:
+		f.write(line + "\n")
 
-	# #data and footer section
-	# data1 = [
-	# ";----------\n",
-	# "section .data\n"
-	# ]
+	#data and footer section
+	data1 = [
+	";----------\n",
+	"section .data\n"
+	]
 
-	# footer_data = footer + data1 + literal_list
+	footer_data = footer + data1 + literal_list
 
-	# for line in footer_data:
-	# 	f.write(line + "\n")
+	for line in footer_data:
+		f.write(line + "\n")
 
 	
-	# #close the file
-	# f.close();
+	#close the file
+	f.close();
 	
-	# #print out in the terminal
-	# print "\n\n\n>>> Assembly Code------------------------------->\n"
-	# for codelet in code:
-	# 	print codelet
-	# for data in footer_data:
-	# 	print data
-	# print "\n-----------------"
-	# print ">>> Compilation complete\n\n"
+	#print out in the terminal
+	print "\n\n\n>>> Assembly Code------------------------------->\n"
+	for codelet in code:
+		print codelet
+	for data in footer_data:
+		print data
+	print "\n-----------------"
+	print ">>> Compilation complete\n\n"
 	
 
 if __name__ == "__main__":
