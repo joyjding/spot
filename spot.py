@@ -43,6 +43,8 @@ if_count = 0
 loop_count = 0
 literal_list = []
 
+symbols = {}
+beyond = 0
 #----------------NOW WE LEX -----------------------------------------------------------------------------
 #PLY Lexer. Takes in a string --> lextokens
 #--------------------------------------------------------------------------------------------------------
@@ -289,7 +291,7 @@ class IntTok(LiteralToken):
 		return self
 
 	def codegen(self):
-		return self.value
+		return ["PUSH DWORD %d"%self.value]
 
 class StringTok(LiteralToken):
 	def __init__(self, value = 0):
@@ -357,7 +359,7 @@ class NameTok(LiteralToken):
 		return namevalue
 
 	def codegen(self):
-		return "[%s]" %self.value #this is the issue
+		return ["PUSH DWORD %s"%symbols.get(self.value, "[%s]" %self.value)] #this is the issue
 
 #Basic punctuation
 class CommaTok(Token):
@@ -531,11 +533,14 @@ class SetTok(Token):
 		return self
 
 	def codegen(self):
-		
-		value = self.varvalue.codegen()
+		commands = self.varvalue.codegen()
+		commands.append("POP EAX")
+		commands.append("MOV [%s], EAX"%self.varname)	
+		# value = self.varvalue.codegen()
 
-		commands = [
-		"mov dword [%s], %s" %(self.varname, value)] 
+		# commands = [
+
+		# "mov dword [%s], %s" %(self.varname, value)] 
 		#set only works for integers right now
 		return commands
 
@@ -558,7 +563,7 @@ class DefineNewFuncTok(Token):
 
 	def __init__(self, value = 0):
 		self.value = value
-		self.function_name = None
+		self.func_name = None
 		self.num_args = 0
 		self.args = []
 		self.block = None
@@ -571,7 +576,7 @@ class DefineNewFuncTok(Token):
 			f_name_list.append(token.value)
 			advance()
 		new_function_name = " ".join(f_name_list)
-		self.function_name = new_function_name	
+		self.func_name = new_function_name	
 		#for saving arguments, if there are any. Currently can only save one arg
 		if isinstance(token, CommaTok):
 			advance(CommaTok)
@@ -583,7 +588,6 @@ class DefineNewFuncTok(Token):
 			advance(ColonTok)
 			new_var_bit = []
 			while isinstance(token, NameTok): 
-				print "new_var_bit", new_var_bit
 				new_var_bit.append(token.value)
 				advance()
 			new_var = " ".join(new_var_bit)
@@ -618,6 +622,33 @@ class DefineNewFuncTok(Token):
 
 	def __repr__(self):
 		return "(%s): .function_name = %s | .num_args = %s | .args = %s" %(self.__class__.__name__, self.function_name, self.num_args, self.args) 
+	
+	def codegen(self):
+		global symbols
+		commands = []
+
+		# Calculate argument offsets
+		i = 1
+		for arg in self.args:
+			symbols[arg] = "[ebp+%d]"%((i*4)+4)
+
+		underscore_name = self.func_name.replace(" ", "_")
+		precommands = [
+		"%s:" %underscore_name,
+		"push ebp ; save current ebp on the stack",
+		"mov ebp, esp ; move base pointer to where stack pointer is, thus creating a new stack frame",
+		# "mov eax, [ebp+8]", # currently for 1 variable, make generalizable later for more variables
+		]
+
+		commands.extend(precommands)
+
+		for block in self.block:
+			commands.extend(block.codegen())
+
+		commands.extend(["pop ebp ; restore ebp to previous position", "ret"])
+		symbols = {}
+		return commands
+
 
 class RunTheFuncTok(Token):
 	#changing it to only take one argument. v2 - multiple args
@@ -673,8 +704,26 @@ class RunTheFuncTok(Token):
 			statement.eval(env)		
 	def __repr__(self):
 		return "(%s): .func_name = %s | .args = %s" %(self.__class__.__name__, self.func_name, self.args) 
+	def codegen(self):
+		#caller side
+		underscore_name = self.func_name.replace(" ", "_")
+		commands = [
+		"; calling %s" % underscore_name,
+		"push eax ; save register eax on the stack",
+		"push ebx ; save ebx on the stack",
+		"push edx ; save edx on the stack"]
+		commands.extend(self.args.codegen())
 
 
+		commands.extend([# "push dword %s ; push variable on the stack" %self.args.codegen(),
+		"call %s ; FUNCTION CALL" % underscore_name, #replace space with underscore
+		"sub esp, 4 ; deallocate parameters by adjusting stack pointer esp", #later, make this generalizable for more than one arg
+		"pop edx ; restore edx register from stack",
+		"pop ebx ; restore ebx register from stack",
+		"pop eax ; restore eax register from stack"
+		])
+
+		return commands
 
 	
 
@@ -863,13 +912,32 @@ class WhileTheConditionTok(Token):
 		commands.extend(while_condition_list)
 		
 		#for the different kinds of conditions
-
+		global beyond
 		if isinstance(self.condition, GreaterThanOpTok):
-			commands.extend(["JLE endloop_%s" % self.labelno]) #jump to ifblocklabel
+			commands.extend([
+				"JG beyond%d"%beyond,
+				"JMP endloop_%s"%self.labelno,
+				"beyond%d:"%beyond
+				])
+			# commands.extend(["JLE endloop_%s" % self.labelno]) #jump to ifblocklabel
 		elif isinstance(self.condition, LessThanOpTok):
-			commands.extend(["JGE endloop_%s" % self.labelno])
+			commands.extend([
+				"JL beyond%d"%beyond,
+				"JMP endloop_%s"%self.labelno,
+				"beyond%d:"%beyond
+				])
+
+			# commands.extend(["JGE endloop_%s" % self.labelno])
 		elif isinstance(self.condition, IsEqualToTok):
-			commands.extend (["JNE endloop_%s" % self.labelno])
+			commands.extend([
+				"JE beyond%d"%beyond,
+				"JMP endloop_%s"%self.labelno,
+				"beyond%d:"%beyond
+				])
+
+			# commands.extend (["JNE endloop_%s" % self.labelno])
+		
+		beyond+=1
 
 		#codegen the block
 		while_block = []
@@ -968,10 +1036,26 @@ class Program:
 		for mini_selves in self.children:
 			mini_selves.eval(env)
 	def codegen(self):
+
 		code = []
+		functions = []
+		remainder = []
 
 		for statement in self.children:
-			code.extend(statement.codegen())
+			if isinstance(statement, DefineNewFuncTok):
+				functions.append(statement)
+			else:
+				remainder.append(statement)
+			# code.extend(statement.codegen())
+
+		for f in functions:
+			code.extend(f.codegen())
+
+		code.append("mystart:")
+
+		for line in remainder:
+			code.extend(line.codegen())
+
 		return code
 
 #eval classes
@@ -1016,12 +1100,21 @@ class AddOpTok(BinaryOpToken):
 		# print ">>> Added %r and %r" % (self.first, self.second)
 		return self.first.eval(env) + self.second.eval(env)
 	def codegen(self):
-		code = [
-		"mov eax %s" % self.first.value, #move self.first into eax
-		"mov ebx %s" % self.second.value, #move self.second into ebx
-		"add eax ebx" #add eax and ebx, store in eax
-		]
-		return code
+		
+		commands = ["; adding"]
+		commands.extend(self.first.codegen())
+		commands.append("POP EAX")
+		commands.extend(self.second.codegen())
+		commands.append("POP EBX")
+		commands.append("ADD EAX, EBX")
+		commands.append("PUSH EAX")
+
+		# code = [
+		# "mov eax %s" % self.first.value, #move self.first into eax
+		# "mov ebx %s" % self.second.value, #move self.second into ebx
+		# "add eax ebx" #add eax and ebx, store in eax
+		# ]
+		return commands
 
 class SubOpTok(BinaryOpToken):
 	lbp = 50
@@ -1107,11 +1200,19 @@ class LessThanOpTok(BinaryOpToken):
 			return False
 	def codegen(self):
 		commands = [
-			"; less than comparison of %s < %s " % (self.first.value, self.second.value),
-			"MOV EAX, %s" % self.first.codegen(), #else
-			"MOV EBX, %s" % self.second.codegen(),
-			"CMP EAX, EBX",
-			]
+			"; less than comparison of %s < %s " % (self.first.value, self.second.value)]
+		commands.extend(self.first.codegen())
+		commands.append("POP EAX")
+		commands.extend(self.second.codegen())
+		commands.append("POP EBX")
+		commands.append("CMP EAX, EBX")
+		commands.append("PUSH EAX")
+			# "MOV EAX, %s" % self.first.codegen(), #else
+			# "MOV EBX, %s" % self.second.codegen(),
+			# "CMP EAX, EBX",
+			# ]
+
+		
 		return commands
 
 class IsEqualToTok(BinaryOpToken):
@@ -1130,11 +1231,23 @@ class IsEqualToTok(BinaryOpToken):
 
 	def codegen(self):
 		commands = [
-			"; is equal to comparison of %s < %s " % (self.first.value, self.second.value),
-			"MOV EAX, %s" % self.first.codegen(), #else
-			"MOV EBX, %s" % self.second.codegen(),
-			"CMP EAX, EBX",
-			]
+			"; is equal to comparison of %s and %s " % (self.first.value, self.second.value)]
+
+		commands.extend(self.first.codegen())
+		commands.append("POP EAX")
+		commands.extend(self.second.codegen())
+		commands.append("POP EBX")
+			# commands.append("MOV EAX, %s" % self.first.codegen())
+		# else:
+			# commands.extend(self.first.codegen())
+		 #else
+
+			# "MOV EBX, %s" % self.second.codegen(),
+		commands.append("CMP EAX, EBX")
+			# ]
+
+		print "self.first.codegen()", self.first.codegen()
+		print "self.second.codegen()", self.second.codegen()
 		return commands
 
 class ModulusTok(BinaryOpToken):
@@ -1146,6 +1259,15 @@ class ModulusTok(BinaryOpToken):
 	def eval(self, env):
 		#print ">>> %r modulus %r" %(self.first, self.second)
 		return self.first.eval(env) % self.second.eval(env)
+	def codegen(self):
+		commands = [
+		"; modulus",
+		"XOR EDX, EDX ; zeroing out edx",
+		"MOV ECX, %s" %self.second.value,
+		"DIV ECX ; divide eax by ecx",
+		"MOV EAX, edx"]
+		
+		return commands
 
 class IncreaseTok(Token):
 	def __init__(self, value = 0):
@@ -1155,15 +1277,19 @@ class IncreaseTok(Token):
 	
 	def statementd(self):
 		advance(IncreaseTok)
+		new_set = SetTok()
 		new_var = advance(NameTok)
-		self.first = new_var
+		new_set.varname = new_var.value
 		advance(PossTok)
 		advance(ValueTok)
 		advance(ByTok)
 		new_increment = advance(IntTok)
-		self.second = new_increment
+		new_add = AddOpTok()
+		new_set.varvalue = new_add #tie add to set
+		new_add.first = new_var
+		new_add.second = new_increment
 		advance(PeriodTok)
-		return self
+		return new_set
 
 	def eval(self, env):
 
@@ -1188,6 +1314,7 @@ class IncreaseTok(Token):
 		if self.second.codegen() == 1: 
 			commands = ["inc dword %s" % self.first.codegen()]
 		
+		print 1000, self.second.codegen()
 		return commands
 
 
@@ -1413,7 +1540,7 @@ def main():
 		"global mystart ;make the main function externally visible",
 		"; ----------------",
 		";START OF PROGRAM\n",
-		"mystart:\n",
+		# "mystart:\n",
 		]
 
 	footer = [
