@@ -3,8 +3,8 @@
 	Screensay: "She said, 'Hello World!'" (Hello!)
 (What a nifty language!)
 	Screensay: "I have [4/2] learn it!"
-	This is new variable cars. Set cars' value to 100.
-	Change car's value to "dog".  
+	Create a new variable cars. Set cars' value to 100.
+	Change cars' value to "dog".  
 
 	Define a new function, addnum. Addnum takes in 2 
 arguments. 
