@@ -815,6 +815,7 @@ class IfTheConditionTok(Token):
 		# add if cond code
 		if_cond_commands = self.condition.codegen()
 		commands.extend(if_cond_commands)
+		commands.append("POP EAX")
 
 		# add dif jump comparisons --> if block
 		if isinstance(self.condition, GreaterThanOpTok):
@@ -829,6 +830,7 @@ class IfTheConditionTok(Token):
 		if self.elseif_block != None:
 			elseif_cond_commands = self.elseif_cond.codegen()
 			commands.extend(elseif_cond_commands)
+			commands.append("POP EAX")
 
 			#add dif jump comparisons --> else if block
 			if isinstance(self.elseif_cond, GreaterThanOpTok):
@@ -910,7 +912,7 @@ class WhileTheConditionTok(Token):
 		commands = ["loop_%s" %self.labelno]
 		while_condition_list = self.condition.codegen()
 		commands.extend(while_condition_list)
-		
+		commands.append("POP EAX")
 		#for the different kinds of conditions
 		global beyond
 		if isinstance(self.condition, GreaterThanOpTok):
@@ -1181,6 +1183,7 @@ class GreaterThanOpTok(BinaryOpToken):
 		"MOV EAX, %s" % self.first.codegen(),
 		"MOV EBX, %s" % self.second.codegen(),
 		"CMP EAX, EBX"
+		"PUSH EAX"
 		]
 		#check to see if this works
 		return commands
@@ -1244,6 +1247,7 @@ class IsEqualToTok(BinaryOpToken):
 
 			# "MOV EBX, %s" % self.second.codegen(),
 		commands.append("CMP EAX, EBX")
+		commands.append("PUSH EAX")
 			# ]
 
 		print "self.first.codegen()", self.first.codegen()
@@ -1501,6 +1505,7 @@ def make_class_tokens(lex_token_list):
 
 def main():
 	filename = sys.argv[1] if len(sys.argv) > 1 else None
+	method = sys.argv[2] if len(sys.argv) > 2 else None
 
 	if filename:
 		source = open(filename).read()
@@ -1529,70 +1534,65 @@ def main():
 	## eval the program - Commented out for codegen
 	#print "\n\nON TO EVALUATION, mateys-------------->"
 	#print "\n-----Here are the results of your eval!"
-	program.eval(globalenv)
-	## end eval ##
-
-	#codegen##
-	# header = [
-	# 	"; < Woof! A Spot --> NASM file for your compiling pleasure /(^.^)\ >",
-	# 	"\n; ----------------",
-	# 	"section .text",
-	# 	"global mystart ;make the main function externally visible",
-	# 	"; ----------------",
-	# 	";START OF PROGRAM\n",
-	# 	# "mystart:\n",
-	# 	]
-
-	# footer = [
-	# 	"; --------------------------------------------",
-	# 	"; EXIT THE PROGRAM\n",
-	# 	"; prepare the argument for the sys call to exit",
-	# 	"push dword 0 			; exit status returned to OS",
-	# 	"\n",
-	# 	"; make the call to sys call to exit",
-	# 	"mov eax, 0x1 			; sys call no. for exit",
-	# 	"sub esp, 4 			; give it some extra space",
-	# 	"int 0x80 			; make the system call"
-	# ]
-
-	# code = header + program.codegen()
-	# # code = program.codegen() #taking out headers and footers for now
-
-	# base_file = filename.split(".")[0]
-	# f = open("%s.asm"%base_file, "w")
+	if method == "-eval":
+		program.eval(globalenv)
 	
-	# for line in code:
-	# 	f.write(line + "\n")
+	else: 
+		#codegen##
+		header = [
+			"; < Woof! A Spot --> NASM file for your compiling pleasure /(^.^)\ >",
+			"\n; ----------------",
+			"section .text",
+			"global mystart ;make the main function externally visible",
+			"; ----------------",
+			";START OF PROGRAM\n",
+			# "mystart:\n",
+			]
 
-	# #data and footer section
-	# data1 = [
-	# ";----------\n",
-	# "section .data\n"
-	# ]
+		footer = [
+			"; --------------------------------------------",
+			"; EXIT THE PROGRAM\n",
+			"; prepare the argument for the sys call to exit",
+			"push dword 0 			; exit status returned to OS",
+			"\n",
+			"; make the call to sys call to exit",
+			"mov eax, 0x1 			; sys call no. for exit",
+			"sub esp, 4 			; give it some extra space",
+			"int 0x80 			; make the system call"
+		]
 
-	# footer_data = footer + data1 + literal_list
+		code = header + program.codegen()
+		# code = program.codegen() #taking out headers and footers for now
 
-	# for line in footer_data:
-	# 	f.write(line + "\n")
+		base_file = filename.split(".")[0]
+		f = open("%s.asm"%base_file, "w")
+		
+		for line in code:
+			f.write(line + "\n")
 
-	
-	# #close the file
-	# f.close();
-	
-	# #print out in the terminal
-	# print "\n\n\n>>> Assembly Code------------------------------->\n"
-	# for codelet in code:
-	# 	print codelet
-	# for data in footer_data:
-	# 	print data
-	# print "\n-----------------"
-	# print ">>> Compilation complete\n\n"
-	
+		#data and footer section
+		data1 = [
+		";----------\n",
+		"section .data\n"
+		]
+
+		footer_data = footer + data1 + literal_list
+
+		for line in footer_data:
+			f.write(line + "\n")
+
+		
+		#close the file
+		f.close();
+		
+		#print out in the terminal
+		print "\n\n\n>>> Assembly Code------------------------------->\n"
+		for codelet in code:
+			print codelet
+		for data in footer_data:
+			print data
+		print "\n-----------------"
+		print ">>> Compilation complete\n\n"
 
 if __name__ == "__main__":
 	main()
-
-
-
-
-
