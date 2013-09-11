@@ -617,11 +617,11 @@ class DefineNewFuncTok(Token):
 		
 	def eval(self, env):
 		#look up variable in env
-		env[self.function_name] = self	
-		print ">> Put %r in the env dict" % self.function_name, env
+		env[self.func_name] = self	
+		print ">> Put %r in the env dict" % self.func_name, env
 
 	def __repr__(self):
-		return "(%s): .function_name = %s | .num_args = %s | .args = %s" %(self.__class__.__name__, self.function_name, self.num_args, self.args) 
+		return "(%s): .function_name = %s | .num_args = %s | .args = %s" %(self.__class__.__name__, self.func_name, self.num_args, self.args) 
 	
 	def codegen(self):
 		global symbols
@@ -787,18 +787,18 @@ class IfTheConditionTok(Token):
 
 	def eval(self, env):	
 		if self.condition.eval(env) == True:
-			print "\n>> The if condition %s is true -->executing if block" % self.condition
+			print "\n>> The if condition is true -->executing if block"
 			for statement in self.true_block:
 				statement.eval(env)
 		elif self.condition.eval(env) == False:
-			print "\n>> The if condition %s is not true-->looking for else if or else" % self.condition
+			print "\n>> The if condition is not true-->looking for else if or else"
 
 			if (self.elseif_cond.eval(env) == True and self.elseif_block != None):
-				print "\n>> Else if condition %s is true-->executing else if block"
+				print "\n>> Else if condition is true-->executing else if block"
 				for statement in self.elseif_block:
 					statement.eval(env)
 			if (self.elseif_cond.eval(env) == False and self.else_block != None):
-				print "\n>> The else if condition %s is not true-->executing else block"
+				print "\n>> The else if condition is not true-->executing else block"
 				for statement in self.else_block:
 					statement.eval(env)
 			if (self.elseif_block == None and self.else_block != None):
@@ -1529,64 +1529,64 @@ def main():
 	## eval the program - Commented out for codegen
 	#print "\n\nON TO EVALUATION, mateys-------------->"
 	#print "\n-----Here are the results of your eval!"
-	# program.eval(globalenv)
+	program.eval(globalenv)
 	## end eval ##
 
-	##codegen##
-	header = [
-		"; < Woof! A Spot --> NASM file for your compiling pleasure /(^.^)\ >",
-		"\n; ----------------",
-		"section .text",
-		"global mystart ;make the main function externally visible",
-		"; ----------------",
-		";START OF PROGRAM\n",
-		# "mystart:\n",
-		]
+	#codegen##
+	# header = [
+	# 	"; < Woof! A Spot --> NASM file for your compiling pleasure /(^.^)\ >",
+	# 	"\n; ----------------",
+	# 	"section .text",
+	# 	"global mystart ;make the main function externally visible",
+	# 	"; ----------------",
+	# 	";START OF PROGRAM\n",
+	# 	# "mystart:\n",
+	# 	]
 
-	footer = [
-		"; --------------------------------------------",
-		"; EXIT THE PROGRAM\n",
-		"; prepare the argument for the sys call to exit",
-		"push dword 0 			; exit status returned to OS",
-		"\n",
-		"; make the call to sys call to exit",
-		"mov eax, 0x1 			; sys call no. for exit",
-		"sub esp, 4 			; give it some extra space",
-		"int 0x80 			; make the system call"
-	]
+	# footer = [
+	# 	"; --------------------------------------------",
+	# 	"; EXIT THE PROGRAM\n",
+	# 	"; prepare the argument for the sys call to exit",
+	# 	"push dword 0 			; exit status returned to OS",
+	# 	"\n",
+	# 	"; make the call to sys call to exit",
+	# 	"mov eax, 0x1 			; sys call no. for exit",
+	# 	"sub esp, 4 			; give it some extra space",
+	# 	"int 0x80 			; make the system call"
+	# ]
 
-	code = header + program.codegen()
-	# code = program.codegen() #taking out headers and footers for now
+	# code = header + program.codegen()
+	# # code = program.codegen() #taking out headers and footers for now
 
-	base_file = filename.split(".")[0]
-	f = open("%s.asm"%base_file, "w")
+	# base_file = filename.split(".")[0]
+	# f = open("%s.asm"%base_file, "w")
 	
-	for line in code:
-		f.write(line + "\n")
+	# for line in code:
+	# 	f.write(line + "\n")
 
-	#data and footer section
-	data1 = [
-	";----------\n",
-	"section .data\n"
-	]
+	# #data and footer section
+	# data1 = [
+	# ";----------\n",
+	# "section .data\n"
+	# ]
 
-	footer_data = footer + data1 + literal_list
+	# footer_data = footer + data1 + literal_list
 
-	for line in footer_data:
-		f.write(line + "\n")
+	# for line in footer_data:
+	# 	f.write(line + "\n")
 
 	
-	#close the file
-	f.close();
+	# #close the file
+	# f.close();
 	
-	#print out in the terminal
-	print "\n\n\n>>> Assembly Code------------------------------->\n"
-	for codelet in code:
-		print codelet
-	for data in footer_data:
-		print data
-	print "\n-----------------"
-	print ">>> Compilation complete\n\n"
+	# #print out in the terminal
+	# print "\n\n\n>>> Assembly Code------------------------------->\n"
+	# for codelet in code:
+	# 	print codelet
+	# for data in footer_data:
+	# 	print data
+	# print "\n-----------------"
+	# print ">>> Compilation complete\n\n"
 	
 
 if __name__ == "__main__":
