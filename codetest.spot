@@ -1,0 +1,12 @@
+Define a new function fizz buzz, which takes 1 integer argument: end.
+
+
+When called, it follows these instructions:  {
+
+Create a new variable count, an integer. Set count's value to 0.
+	If the condition count < end, follow these instructions: {
+	Screensay: "woohoo". Increase count's value by 1. 
+	}.
+}.
+
+Run the function fizz buzz, passing in the argument 10.
