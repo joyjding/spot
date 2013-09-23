@@ -17,6 +17,7 @@ Syntax (How to talk to your computer in Spot)
 Using fizzbuzz.spot as an example, let's take a walk through Spot syntax. 
 
 Here you see the code for fizzbuzz.spot.
+	
 	(FIZZBUZZ)
 
 	Define a new function fizz buzz, which takes 1 integer argument: end.
