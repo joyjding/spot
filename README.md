@@ -16,7 +16,7 @@ Syntax (How to talk to your computer in Spot)
 
 Using fizzbuzz.spot as an example, let's take a walk through Spot syntax. 
 
-Here you see the code for fizzbuzz.spot.
+Here you see the code for fizzbuzz.spot :
 	
 	(FIZZBUZZ)
 
@@ -37,6 +37,10 @@ Here you see the code for fizzbuzz.spot.
 
 	Run the function fizz buzz, passing in the argument 10.
 
+1. Put comments to yourself or anyone else in parentheses
+	(Hi! I just started writing in Spot!)
+	(Oh, really?)
+	(Yeah. Okay, maybe we should stick to Twitter for conversations from now on)
 
 
 
@@ -50,9 +54,7 @@ If/Else If/Else
 ----
 	If the condition apples
 
-Test
 
-<script src="https://gist.github.com/mojombo/118964.js?file=gfm.rb">
 
 
 
