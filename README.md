@@ -2,7 +2,13 @@
 
 Hello there! So nice to meet you. 
 
-Spot is an English syntax programming language that seeks to expose and teach a beginner programmer the logic foundations of programming without the overhead of learning what different symbols mean. Spot's machinery (parser/interpreter/compiler) is built on Python. Most of Spot compiles to x86 assembly.
+Spot is an English syntax programming language that seeks to expose and teach a beginner programmer the logic foundations of programming without the overhead of learning what different symbols mean. Spot's machinery (parser/interpreter/compiler) is built on Python, and compiles to x86 assembly.
+
+Choose your own Spot adventure:
+
+I'd like to learn some Spot syntax! <https://github.com/joyjding/spot#syntax-talking-to-your-computer-in-spot>
+
+Show me the code gears! <>
 
 So without further ado, let's get started!
 
@@ -83,6 +89,10 @@ Here you see the code for fizzbuzz.spot :
 	}. 
 
 	Run the function fizz buzz, passing in the argument 10.
+
+## Gears, gears, gears
+
+
 
 Testing syntax headers 
 
