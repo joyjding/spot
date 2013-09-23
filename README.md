@@ -6,7 +6,8 @@ Spot is an English syntax programming language that seeks to expose and teach a 
 
 Choose your own Spot adventure:
 
-I'd like to learn some Spot syntax! (https://github.com/joyjding/spot#syntax-talking-to-your-computer-in-spot "I'd like to learn some Spot syntax!")
+[I'd like to learn some Spot syntax!][]
+	[I'd like to learn some Spot syntax!]: https://github.com/joyjding/spot#syntax-talking-to-your-computer-in-spot
 
 Show me the code gears! <>
 
