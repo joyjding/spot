@@ -50,12 +50,12 @@ Go ahead and clone this repository to your computer. That gives you the requisit
 
 6. Defining and running functions (finally!)
 
-	Define a new function running amok.
+		Define a new function running amok.
 
-	When called, it follows these instructions: 
-		{Screensay: "Running amok! Running amok! Running amok!"}.
+		When called, it follows these instructions: 
+			{Screensay: "Running amok! Running amok! Running amok!"}.
 
-	Run the function running amok. 
+		Run the function running amok. 
 
 
 ##All Together Now
