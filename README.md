@@ -38,9 +38,9 @@ Here you see the code for fizzbuzz.spot :
 	Run the function fizz buzz, passing in the argument 10.
 
 1. Put comments to yourself or anyone else in parentheses
-	(Hi! I just started writing in Spot!)
-	(Oh, really?)
-	(Yeah. Okay, maybe we should stick to Twitter for conversations from now on)
+		(Hi! I just started writing in Spot!)
+		(Oh, really?)
+		(Yeah. Okay, maybe we should stick to Twitter for conversations from now on)
 
 
 
