@@ -14,11 +14,42 @@ Go ahead and clone this repository to your computer. That gives you the requisit
 Syntax (How to talk to your computer in Spot)
 ===
 
-Step 1: Creating and Setting Variables
+Using fizzbuzz.spot as an example, let's take a walk through Spot syntax. 
+
+Here you see the code for fizzbuzz.spot.
+	(FIZZBUZZ)
+
+	Define a new function fizz buzz, which takes 1 integer argument: end.
+	When called, it follows these instructions: {
+		
+		Create a new variable counter, an integer. 
+		Set counter's value to 1.
+
+		While the condition counter < end, follow these instructions: {
+			If the condition counter modulus 5 is equal to 0, follow these instructions: {Screensay: "BUZZ".}.
+			
+			Else if the condition counter modulus 3 is equal to 0, follow these instructions: {Screensay: "FIZZ".}.
+
+			Increase counter's value by 1. 
+		}.
+	}. 
+
+	Run the function fizz buzz, passing in the argument 10.
+
+
+
+
+Creating and Setting Variables
 ----
 
-	Create new variable, number of apples, an integer. 
-	Set number of apples' value to 8. 
+	Create a new variable apples, an integer. 
+	Set apples' value to 8. 
+
+If/Else If/Else
+----
+	If the condition apples
+
+
 
 
 
