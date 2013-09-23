@@ -1,4 +1,4 @@
-#spot
+#Spot language
 
 Hello there! So nice to meet you. 
 
@@ -10,9 +10,9 @@ Spot was built in 3.5 weeks as my Hackbright personal project, and as such, is d
 
 Choose your own Spot adventure:
 
-[I'd like to learn some Spot syntax!](https://github.com/joyjding/spot#syntax-talking-to-your-computer-in-spot)
+- [I'd like to learn some Spot syntax!](https://github.com/joyjding/spot#syntax-talking-to-your-computer-in-spot)
 
-[Show me the code gears!](https://github.com/joyjding/spot#gears-gears-gears)
+- [Show me the code gears!](https://github.com/joyjding/spot#gears-gears-gears)
 
 
 ###Getting Started
@@ -100,14 +100,6 @@ Here you see the code for fizzbuzz.spot :
 
 
 
-Testing syntax headers 
-
-#One 
-##Two
-###Three
-####Four
-#####Five
-######Six
 
 
 
