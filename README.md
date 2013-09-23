@@ -14,3 +14,12 @@ Go ahead and clone this repository to your computer. That gives you the requisit
 Syntax (How to talk to your computer in Spot)
 ===
 
+Step 1: Creating and Setting Variables
+----
+
+	Create new variable, number of apples, an integer. 
+	Set number of apples' value to 8. 
+
+
+
+
