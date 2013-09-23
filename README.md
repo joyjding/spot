@@ -6,11 +6,11 @@ Spot is an English syntax programming language that seeks to expose and teach a 
 
 So without further ado, let's get started!
 
-#Setup (The boring, but necessary part)
+###Setup (The boring, but necessary part)
 
 Go ahead and clone this repository to your computer. That gives you the requisite PLY library to run the lexer, a couple of sample Spot files to play with and spot.py, which is the engine that drives Spot. Then, you can start writing .spot files on your own!
 
-#Syntax (How to talk to your computer in Spot)
+##Syntax (Talking to your computer in Spot)
 
 1. Put comments to yourself or anyone else in parentheses
 		
@@ -19,12 +19,12 @@ Go ahead and clone this repository to your computer. That gives you the requisit
 		(Yeah. Okay, maybe we should stick to Twitter for conversations from now on)
 
 2. Creating and setting new variables
+
 		Create a new variable cats, an integer.
 		Set cats' value to 10000. 
 
-		(That's not nearly enough cats)
-
 3. Printing to the screen
+
 		Screensay: "How'd this get on my screen?".
 		Screensay: "Hey, stop that!".
 		Screensay: "Printing to screen. You asked for it, right?".
