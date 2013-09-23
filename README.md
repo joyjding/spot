@@ -31,11 +31,14 @@ Go ahead and clone this repository to your computer. That gives you the requisit
 
 4. If/Else If/Else
 		
-		If the condition cats < 10000, follow these instructions: {Screensay: "Time to head to the SPCA.".}
+		If the condition cats < 10000, follow these instructions: 
+			{Screensay: "Time to head to the SPCA.".}
 
-		Else if the condition cats is equal to 10000, follow these instructions: {Screensay: "Goldilocks theorem satisfied. I have just the right amount of cats.".}
+		Else if the condition cats is equal to 10000, follow these instructions: 
+			{Screensay: "Goldilocks theorem satisfied. I have just the right amount of cats.".}
 
-		Else, follow these instructions: {Screensay: "Ahhhhhhhhhhhhhh!!!".}
+		Else, follow these instructions: 
+			{Screensay: "Ahhhhhhhhhhhhhh!!!".}
 
 
 ##All Together Now
