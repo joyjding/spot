@@ -50,6 +50,10 @@ If/Else If/Else
 ----
 	If the condition apples
 
+Test
+
+<script src="https://gist.github.com/mojombo/118964.js?file=gfm.rb">
+
 
 
 
