@@ -6,7 +6,7 @@ Spot is an English syntax programming language that seeks to expose and teach a 
 
 So without further ado, let's get started!
 
-###Setup (The boring, but necessary part)
+###Getting Started (Boring, but necessary)
 
 Go ahead and clone this repository to your computer. That gives you the requisite PLY library to run the lexer, a couple of sample Spot files to play with and spot.py, which is the engine that drives Spot. Then, you can start writing .spot files on your own!
 
@@ -29,14 +29,17 @@ Go ahead and clone this repository to your computer. That gives you the requisit
 		Screensay: "Hey, stop that!".
 		Screensay: "Printing to screen. You asked for it, right?".
 
+4. If/Else If/Else
+		
+		If the condition cats < 10000, follow these instructions: {Screensay: "Time to head to the SPCA.".}
 
-##If/Else If/Else
+		Else if the condition cats is equal to 10000, follow these instructions: {Screensay: "Goldilocks theorem satisfied. I have just the right amount of cats.".}
 
-	If the condition apples
+		Else, follow these instructions: {Screensay: "Ahhhhhhhhhhhhhh!!!".}
 
 
-All Together Now
-===
+##All Together Now
+
 
 Now let's see what an example program might look like. 
 
