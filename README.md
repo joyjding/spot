@@ -29,7 +29,7 @@ Go ahead and clone this repository to your computer. That gives you the requisit
 		Screensay: "Hey, stop that!".
 		Screensay: "Printing to screen. You asked for it, right?".
 
-4. If/Else If/Else
+4. If/ Else If /Else
 		
 		If the condition cats < 10000, follow these instructions: 
 			{Screensay: "Time to head to the SPCA.".}
@@ -39,6 +39,14 @@ Go ahead and clone this repository to your computer. That gives you the requisit
 
 		Else, follow these instructions: 
 			{Screensay: "Ahhhhhhhhhhhhhh!!!".}
+
+5. While loops
+		
+		While the condition cats is equal to 1, follow these instructions: 
+			{Screensay: "Spend all your time following your cat with your thumb hovering over Vine.".}
+
+		(Notice, that if cats is initially set to 1, this while loop will never end. Thank goodness cats is set to 10000, or we'd really be in trouble.)
+
 
 
 ##All Together Now
