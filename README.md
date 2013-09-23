@@ -17,14 +17,15 @@ Choose your own Spot adventure:
 
 #Setup
 
-1. Go ahead and clone this repository to your computer.
+Go ahead and clone this repository to your computer.
 	
-		git clone https://github.com/joyjding/spot
+	git clone https://github.com/joyjding/spot
 
-2. Spot can run in interpretation or compilation mode. 
+Spot can run in interpretation or compilation mode. 
+
 To run in interpretation mode:
 	
-		python spot.py -eval <filename>
+	python spot.py -eval <filename>
 
 To run in compilation mode:
 	
