@@ -2,20 +2,24 @@
 
 Hello there! So nice to meet you. 
 
-Spot is an English syntax programming language that seeks to expose and teach a beginner programmer the logic foundations of programming without the overhead of learning what different symbols mean. Spot's machinery (parser/interpreter/compiler) is built on Python, and compiles to x86 assembly.
+Spot is an English syntax programming language that seeks to expose and teach a beginner programmer the logic foundations of programming without the overhead of learning what different symbols mean. 
+
+Spot's machinery (parser/interpreter/compiler) is built on Python, and compiles to x86 assembly.
+
+Spot was built in 3.5 weeks as my Hackbright personal project, and as such, is definitely a work in progress.  
 
 Choose your own Spot adventure:
 
-[I'd like to learn some Spot Syntax!](https://github.com/joyjding/spot#syntax-talking-to-your-computer-in-spot "I'd like to learn some Spot syntax!")
+[I'd like to learn some Spot syntax!](https://github.com/joyjding/spot#syntax-talking-to-your-computer-in-spot)
 
 [Show me the code gears!](https://github.com/joyjding/spot#gears-gears-gears)
 
 
-###Getting Started (Boring, but necessary)
+###Getting Started
 
 Go ahead and clone this repository to your computer. That gives you the requisite PLY library to run the lexer, a couple of sample Spot files to play with and spot.py, which is the engine that drives Spot. Then, you can start writing .spot files on your own!
 
-##Syntax (Talking to your computer in Spot)
+##Syntax
 
 1. Put comments to yourself or anyone else in parentheses
 		
@@ -53,7 +57,7 @@ Go ahead and clone this repository to your computer. That gives you the requisit
 		(Notice, that if cats is initially set to 1, this while loop will never end. 
 		Thank goodness cats is set to 10000, or we'd really be in trouble.)
 
-6. Defining and running functions (finally!)
+6. Defining and running functions
 
 		Define a new function running amok.
 
@@ -89,7 +93,10 @@ Here you see the code for fizzbuzz.spot :
 
 	Run the function fizz buzz, passing in the argument 10.
 
+
 ## Gears, gears, gears
+
+
 
 
 
