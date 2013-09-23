@@ -45,8 +45,17 @@ Go ahead and clone this repository to your computer. That gives you the requisit
 		While the condition cats is equal to 1, follow these instructions: 
 			{Screensay: "Spend all your time following your cat with your thumb hovering over Vine.".}
 
-		(Notice, that if cats is initially set to 1, this while loop will never end. Thank goodness cats is set to 10000, or we'd really be in trouble.)
+		(Notice, that if cats is initially set to 1, this while loop will never end. 
+		Thank goodness cats is set to 10000, or we'd really be in trouble.)
 
+6. Defining and running functions (finally!)
+
+	Define a new function running amok.
+
+	When called, it follows these instructions: 
+		{Screensay: "Running amok! Running amok! Running amok!"}.
+
+	Run the function running amok. 
 
 
 ##All Together Now
