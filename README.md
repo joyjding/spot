@@ -13,7 +13,7 @@ Choose your own Spot adventure:
 - [Show me the code gears!](https://github.com/joyjding/spot#gears-gears-gears)
 
 
-##Getting Started: Setup, etc.
+###Getting Started: Setup, etc.
 
 Go ahead and clone this repository to your computer.
 	
@@ -41,7 +41,7 @@ To run Spot in interpretation mode:
 2. Results will show up in the terminal window. 
 
 
-##Syntax: How to Talk to Your Computer in Spot
+###Syntax: How to Talk to Your Computer in Spot
 
 1. Put comments to yourself or anyone else in parentheses
 		
@@ -89,7 +89,7 @@ To run Spot in interpretation mode:
 		Run the function running amok. 
 
 
-##An Example Program: Fizzbuzz.spot 
+###An Example Program: Fizzbuzz.spot 
 
 
 Here you see the code for fizzbuzz.spot :
@@ -114,9 +114,17 @@ Here you see the code for fizzbuzz.spot :
 	Run the function fizz buzz, passing in the argument 10.
 
 
-## Gears, gears, gears
+### Gears, gears, gears
 
+Spot is composed of several key parts: a PLY lexer, recursive descent parser, Python interpreter and x86 assembly code generator. 
 
+#####PLY Lexer
+
+The PLY library includes a lexer that takes in a string and breaks it up into tokens based on rules specified in regex. With regex, I was able to allow for some flexibility in my language. Here, you can see the regex rule for a "Create new variable" token in Spot.
+	
+	def t_CREATE_NEW_VARIABLE(t):
+	r'[Cc]reate\s(a\s)?new\svariable'
+	return t
 
 
 
