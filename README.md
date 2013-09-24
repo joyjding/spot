@@ -2,9 +2,7 @@
 
 Hello there! So nice to meet you. 
 
-Spot is an English syntax programming language that seeks to expose and teach a beginner programmer the logic foundations of programming without the overhead of learning what different symbols mean. 
-
-Spot's machinery (parser/interpreter/compiler) is built on Python, and compiles to x86 assembly.
+Driven by an ever-present curiousity about how things really work, the thrill of a challenge, and a love of languages and language processing, for my final HB project I chose to design and implement a programming language. Inspired by the simple language of See Spot Run, Spot is a language designed to expose the logic of programming to a beginning programmer using plain English syntax. Spot compiles to x86 assembly and its machinery from string to final compilation includes a PLY lexer, a Pratt recursive descent parser, and code generation functions that emit assembly.
 
 Spot was built in 3.5 weeks as my Hackbright personal project, and as such, is definitely a work in progress.  
 
@@ -15,7 +13,7 @@ Choose your own Spot adventure:
 - [Show me the code gears!](https://github.com/joyjding/spot#gears-gears-gears)
 
 
-##Setup
+##Getting Started: Setup, etc.
 
 Go ahead and clone this repository to your computer.
 	
@@ -43,7 +41,7 @@ To run Spot in interpretation mode:
 2. Results will show up in the terminal window. 
 
 
-##Syntax
+##Syntax: How to Talk to Your Computer in Spot
 
 1. Put comments to yourself or anyone else in parentheses
 		
@@ -91,10 +89,8 @@ To run Spot in interpretation mode:
 		Run the function running amok. 
 
 
-##All Together Now
+##An Example Program: Fizzbuzz.spot 
 
-
-Now let's see what an example program might look like. 
 
 Here you see the code for fizzbuzz.spot :
 	
@@ -119,6 +115,10 @@ Here you see the code for fizzbuzz.spot :
 
 
 ## Gears, gears, gears
+
+
+
+
 
 
 
