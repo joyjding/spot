@@ -1306,9 +1306,9 @@ class IncreaseTok(Token):
 		return "(%s, %r): self.first = %s, self.second = %s" %(self.__class__.__name__, self.value, self.first, self.second)
 
 	def codegen(self):
-		#we're only going to have increment go by 1
-		# print "self.first.codegen", self.first.codegen()
-		# print "self.second.codegen", self.second.codegen()
+		#Currently, incrementer only increases by 1
+		
+		commands = [] 
 		if self.second.codegen() == 1: 
 			commands = ["inc dword %s" % self.first.codegen()]
 		
@@ -1357,7 +1357,6 @@ token_map = {
 	# reserved words:
 	"TRUE" : TrueTok,
 	"FALSE" : FalseTok,
-	"THISIS" : ThisIsTok,
 	"ELSE" : ElseTok,
 	"A_AN" : AnTok,
 	"BY" : ByTok,
