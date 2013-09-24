@@ -15,27 +15,22 @@ Choose your own Spot adventure:
 - [Show me the code gears!](https://github.com/joyjding/spot#gears-gears-gears)
 
 
-#Setup
+##Setup
 
 Go ahead and clone this repository to your computer.
 	
 	git clone https://github.com/joyjding/spot
 
 Spot can run in interpretation or compilation mode:
+
 To run in interpretation mode:
 	
 	python spot.py -eval <filename>
 
 To run in compilation mode:
 	
-		python spot.py <filename>
+	python spot.py <filename>
 
-
-
-
-
-
-Go ahead and clone this repository to your computer. That gives you the requisite PLY library to run the lexer, a couple of sample Spot files to play with and spot.py, which is the engine that drives Spot. Then, you can start writing .spot files on your own!
 
 ##Syntax
 
