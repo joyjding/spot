@@ -182,6 +182,34 @@ Then, I took the LexTokens, and mapped them 1:1 to Python class objects. This ge
 
 Although code generation is well-documented, both examples that I drew on for coding my parser were non-intuitive and difficult to understand. So here, I will attempt to describe Pratt, for anyone else writing a Pratt-style recursive descent parser.
 
+#### Why Pratt?
+
+Recursive-descent parsers are pretty efficient, so as long as the next action to take can most of the time be determined by what happens at the beginning of a statement. A recursive-descent parser checks the first token in a sequence, and then performs an appropriate action. 
+This is all well and fine until we get to expressions, for instance:
+
+	1+2*3
+
+In the case of `1+2*3` , the parser cannot simply take an action based on what it sees first (`1`). It needs to be able to determine that `2*3` needs to be evaluated first, and then added to the `1`. Pratt-style recursive descent parsing makes it possible for expressions to be parsed efficiently. 
+
+#### Pratt's Expression Parsing Algorithm
+
+The heart of Pratt-style recursive descent parsing is the expression function. Implemented in Python, it looks something like this. 
+
+```python
+def expression(rbp=0):	    
+	    t = token
+	    advance()
+	    left = t.nulld()
+	    while rbp < token.lbp:
+	        t = token
+	        advance()
+	        left = t.leftd(left) 
+	    return left
+```	    
+
+
+
+
 
 
 --in progress--
