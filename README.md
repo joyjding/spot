@@ -23,22 +23,20 @@ Spot can run in compilation or interpretation mode. In compilation mode, Spot co
 
 To run Spot in compilation mode:
 
-1. Run spot.py on your file of choice. This generates a filename.asm file.
+Run spot.py on your file of choice. This generates a filename.asm file.
 	
-		python spot.py <filename.spot>
+	python spot.py <filename.spot>
 
-2. Take the asm file and run it through codegen.sh, a shell script. Codegen.sh creates an object file and then executes it.
-
-		./codegen.sh <filename>
+Then, take the asm file and run it through a nasm assembler, which generates an object file that you can then run as an executable.
 
 
 To run Spot in interpretation mode:
 	
-1. Run spot.py on your file of choice. 
+Run spot.py on your file of choice. 
 	
-		python spot.py -eval <filename>
+	python spot.py -eval <filename>
 
-2. Results will show up in the terminal window. 
+
 
 
 ###Syntax: How to Talk to Your Computer in Spot
@@ -113,6 +111,48 @@ Here you see the code for fizzbuzz.spot :
 
 	Run the function fizz buzz, passing in the argument 10.
 
+### Reserved Key Words and Phrases
+
+#### Reserved Words
+
+	true
+	false
+	[Rr]eturn (decide can only be capital?)
+	value (cap?)
+	takes
+	a[n]
+	by
+	or
+	and
+	to
+	it
+	else
+	if
+	argument[s]
+	set
+
+#### Reserved Phrases
+	
+	Create [a] new variable
+	Define [a] new function
+	Run the function
+	If the condition
+	While the condition
+	When called
+	
+	which takes
+	is equal to
+	passing in the arguments
+	follow these instructions
+
+
+
+
+
+
+
+
+
 
 ### Gears, gears, gears
 
@@ -121,6 +161,30 @@ Spot is composed of several key parts: a PLY lexer, recursive descent parser, Py
 In brief, a file is read in and broken up into tokens by the PLY lexer and mapped 1:1 to Python class objects. The parser checks if a token object possesses a statement method. If the token has a statement method, it is parsed as a statement; otherwise, it is parsed as an expression using Pratt-style expression parsing. Parsing generates an abstract-syntax tree, which can then either be interpreted in Python using the eval() method on each token, or written into a .asm file using the codegen() method on each token.
 
 
+### Lexing 
+
+Lexing is the process of converting an input stringinto a stream of significant tokens based on the grammar of a language. I used the [PLY](http://www.dabeaz.com/ply/) library to lex my tokens, such that an input string is broken into LexTokens, with the structure (tok.type, tok.value, tok.line, and tok.lexpos). 
+
+So, given the string:
+	
+	Screensay: "Hello World.".
+
+PLY generates:
+
+	[LexToken(SCREENSAY,'Screensay',1,0), LexToken(COLON,':',1,9), LexToken(STRING,'"hello world."',1,11), LexToken(PERIOD,'.',1,25)]
+
+Then, I took the LexTokens, and mapped them 1:1 to Python class objects. This generates:
+
+	[ScreensayTok, ColonTok, StringTok, PeriodTok, EndTok] 
+
+
+### Pratt Parser
+
+Although code generation is well-documented, both examples that I drew on for coding my parser were non-intuitive and difficult to understand. So here, I will attempt to describe Pratt, for anyone else writing a Pratt-style recursive descent parser.
+
+
+
+--in progress--
 
 
 
