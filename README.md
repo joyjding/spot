@@ -193,6 +193,37 @@ In the case of `1+2*3` , the parser cannot simply take an action based on what i
 
 #### Pratt's Expression Parsing Algorithm
 
+Before we dive into Pratt's expression function, we're going to need to know a couple of things first. And to help us out, we'll take a look at these three object classes: the add operator token (AddOpTok), the multiply operator token(MulOpTok), and the integer token (IntTok). _Note: Each of these tokens in my code also has an eval function and a codegen function, but I'm leaving them out in this tutorial, so we can focus on parsing._ 
+
+```python
+class AddOpTok(BinaryOpToken):
+	lbp = 50
+	
+	def nulld(self):
+		return expression(100)
+	def leftd(self, left):
+		self.first = left
+		self.second = expression(50)
+		return self
+
+class MulOpTok(BinaryOpToken):
+	lbp = 70
+
+	def leftd(self, left):
+		self.first = left
+		self.second = expression(70)
+		return self
+
+class IntTok(LiteralToken):
+	lbp = 0
+
+	def nulld(self):
+		return self
+```
+
+
+
+
 The heart of Pratt-style recursive descent parsing is the expression function. Implemented in Python, it looks something like this. 
 
 ```python
