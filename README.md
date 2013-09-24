@@ -25,22 +25,22 @@ Spot can run in compilation or interpretation mode. In compilation mode, Spot co
 
 To run Spot in compilation mode:
 
-	1. Run spot.py on your file of choice. This generates a filename.asm file.
+1. Run spot.py on your file of choice. This generates a filename.asm file.
 	
-			python spot.py <filename.spot>
+		python spot.py <filename.spot>
 
-	2. Take the asm file and run it through codegen.sh, a shell script. Codegen.sh creates an object file and then executes it.
+2. Take the asm file and run it through codegen.sh, a shell script. Codegen.sh creates an object file and then executes it.
 
-			./codegen.sh <filename>
+		./codegen.sh <filename>
 
 
 To run Spot in interpretation mode:
 	
-	1. Run spot.py on your file of choice. 
+1. Run spot.py on your file of choice. 
 	
-			python spot.py -eval <filename>
+		python spot.py -eval <filename>
 
-	2. Results will show up in the terminal window. 
+2. Results will show up in the terminal window. 
 
 
 ##Syntax
