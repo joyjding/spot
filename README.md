@@ -21,15 +21,27 @@ Go ahead and clone this repository to your computer.
 	
 	git clone https://github.com/joyjding/spot
 
-Spot can run in interpretation or compilation mode:
+Spot can run in compilation or interpretation mode. In compilation mode, Spot compiles to x86 assembly. In interpretation mode, Spot commands are interpreted in Python. 
 
-To run in interpretation mode:
-	
-	python spot.py -eval <filename>
+- To run Spot in compilation mode:
 
-To run in compilation mode:
+	1. Run spot.py on your file of choice. This generates a filename.asm file.
 	
-	python spot.py <filename>
+		python spot.py <filename.spot>
+
+	2. Take the asm file and run it through codegen.sh, a shell script. Codegen.sh creates an object file and then executes it.
+
+		./codegen.sh <filename>
+
+
+
+- To run Spot in interpretation mode:
+	
+	1. Run spot.py on your file of choice. 
+	
+		python spot.py -eval <filename>
+
+	2. Results will show up in the terminal window. 
 
 
 ##Syntax
