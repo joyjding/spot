@@ -191,7 +191,7 @@ This is all well and fine until we get to expressions, for instance:
 
 In the case of `1+2*3` , the parser cannot simply take an action based on what it sees first (`1`). It needs to be able to determine that `2*3` needs to be evaluated first, and then added to the `1`. Pratt-style recursive descent parsing makes it possible for expressions to be parsed efficiently. 
 
-#### Pratt's Expression Parsing Algorithm
+#### leftd(), nulld(), and lbp
 
 Before we dive into Pratt's expression function, we're going to need to know a couple of things first. And to help us out, we'll take a look at these three object classes: the add operator token (AddOpTok), the multiply operator token(MulOpTok), and the integer token (IntTok). _Note: Each of these tokens in my code also has an eval function and a codegen function, but I'm leaving them out in this tutorial, so we can focus on parsing._ 
 
@@ -223,13 +223,15 @@ class IntTok(LiteralToken):
 
 You'll notice that each of these tokens has a `lbp` attribute, and that the AddOptok has both a `nulld()` and `leftd()` method, while the MulOpTok only has a `leftd()` and the IntTok only has a `nulld().`
 
-*nulld()* is the method that is called when the token appears at the beginning of an expression, and there is nothing (or null) before it. IntTok has a nulld() because you can start mathematical expressions, like `1+2` with an integer (in this case, `1`). Likewise, it makes sense that the add operator has a nulld(), because of expressions like `+4`. And yes, the subtract operator also has a nulld(), so negative numbers can be parsed correctly. 
+**nulld()** is the method that is called when the token appears at the beginning of an expression, and there is nothing (or null) before it. IntTok has a nulld() because you can start mathematical expressions, like `1+2` with an integer (in this case, `1`). Likewise, it makes sense that the add operator has a nulld(), because of expressions like `+4`. And yes, the subtract operator also has a nulld(), so negative numbers can be parsed correctly. 
 
-*leftd()* is the method that is called when there are other tokens to the left of the token the parser is looking at. Both the MulOpTok and the AddOpTok have leftd() methods because they are binary operators. So for an expression like 5+2, when the parser is considering the `+`, the `5` is still to the left of it, so leftd() is called. 
+**leftd()** is the method that is called when there are other tokens to the left of the token the parser is looking at. Both the MulOpTok and the AddOpTok have leftd() methods because they are binary operators. So for an expression like 5+2, when the parser is considering the `+`, the `5` is still to the left of it, so leftd() is called. 
 
-*lbp* stands for left binding power. Left binding power is a number that represents how tightly a token "holds on" to the token to the left of it. Accordingly, it makes sense that the AddOpTok (`lbp=50`) would have a smaller lbp than the MulOpTok (`lbp=70`), as multiplication comes before addition in order of operations. 
+**lbp** stands for left binding power. Left binding power is a number that represents how tightly a token "holds on" to the token to the left of it. Accordingly, it makes sense that the AddOpTok (`lbp=50`) would have a smaller lbp than the MulOpTok (`lbp=70`), as multiplication comes before addition in order of operations. 
 
-The heart of Pratt-style recursive descent parsing is the expression function. Implemented in Python, it looks something like this. 
+###Pratt's expression function
+
+Okay, now we're ready to take a look at the heart of Pratt-style recursive descent parsing, the expression function. Implemented in Python, it looks something like this. 
 
 ```python
 def expression(rbp=0):	    
@@ -242,7 +244,6 @@ def expression(rbp=0):
 	        left = t.leftd(left) 
 	    return left
 ```	    
-
 
 
 
