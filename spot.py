@@ -102,7 +102,6 @@ token_names = [
 ]
 
 reserved = {
-	'this is' : 'THISIS',
 	'by' : 'BY',
 	'while' : 'WHILE',
 	'or' : 'OR',
@@ -247,7 +246,6 @@ def t_error(t):
 	print "Illegal character '%s' " % t.value[0]
 
 
-
 #----------------NOW WE CREATE CLASS TOKENS!-------------------------------------------------------------
 # with nulld(), leftd(), statementd() when necessary, to make parsing happen
 #--------------------------------------------------------------------------------------------------------
@@ -389,8 +387,6 @@ class DoubleQTok(Token):
 	pass
 
 #Syntax Words and Phrases
-class ThisIsTok:
-	pass
 class ValueTok(Token):
 	pass
 class TakesTok(Token):
@@ -493,7 +489,6 @@ class Create_A_New_VarTok(Token):
 
 	def eval(self, env):
 		#create a new variable in the env dict		
-		print "I'm here!"
 		env[self.varname] = None
 		print ">>Added %r to env dict. env: %s" %(self.varname, env)
 
@@ -825,7 +820,6 @@ class IfTheConditionTok(Token):
 		elif isinstance(self.condition, IsEqualToTok):
 			commands.extend (["JE if_%s" % self.labelno])
 		
-
 		#add elseif cond code
 		if self.elseif_block != None:
 			elseif_cond_commands = self.elseif_cond.codegen()
@@ -1318,7 +1312,6 @@ class IncreaseTok(Token):
 		if self.second.codegen() == 1: 
 			commands = ["inc dword %s" % self.first.codegen()]
 		
-		print 1000, self.second.codegen()
 		return commands
 
 
