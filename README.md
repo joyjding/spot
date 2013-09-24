@@ -118,13 +118,11 @@ Here you see the code for fizzbuzz.spot :
 
 Spot is composed of several key parts: a PLY lexer, recursive descent parser, Python interpreter and x86 assembly code generator. 
 
-#####PLY Lexer
+In brief, a file is read in and broken up into tokens by the PLY lexer and mapped 1:1 to Python class objects. The parser checks if a token object possesses a statement method. If the token has a statement method, it is parsed as a statement; otherwise, it is parsed as an expression using Pratt-style expression parsing. Parsing generates an abstract-syntax tree, which can then either be interpreted in Python using the eval() method on each token, or written into a .asm file using the codegen() method on each token.
 
-The PLY library includes a lexer that takes in a string and breaks it up into tokens based on rules specified in regex. With regex, I was able to allow for some flexibility in my language. Here, you can see the regex rule for a "Create new variable" token in Spot.
-	
-	def t_CREATE_NEW_VARIABLE(t):
-	r'[Cc]reate\s(a\s)?new\svariable'
-	return t
+
+
+
 
 
 
