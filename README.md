@@ -22,12 +22,11 @@ Go ahead and clone this repository to your computer.
 	git clone https://github.com/joyjding/spot
 
 Spot can run in interpretation or compilation mode:
-
-	To run in interpretation mode:
+To run in interpretation mode:
 	
-		python spot.py -eval <filename>
+	python spot.py -eval <filename>
 
-	To run in compilation mode:
+To run in compilation mode:
 	
 		python spot.py <filename>
 
