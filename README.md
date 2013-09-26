@@ -294,55 +294,7 @@ At the beginning of an expression, the expression function is called, with a rbp
 Then, the global token variable is saved as t. In our case, the global token variable is `1`. Advance is called without an argument, which means it pops the next Python class token object off of the list and saves it in the global token variable. The nulld() method is called on the first token, and saved in the left variable.
 
 
-
-
-
-```python
-def expression(rbp=0):      
-    t = token               # t = (1)
-    advance()               # advance() moves (+) into global token variable
-    left = t.nulld()        # left = (1).nulld()
-                                # (1).nulld() returns (1)
-                                # left = (1)
-
-    while rbp < token.lbp:  # while 0 < (+).lbp
-                                # (+).lbp = 50
-                                # while 0 < 50
-        t = token               # t = (+) 
-        advance()               # advance() moves (2) into global token variable
-        left = t.leftd(left)    # left = (+).leftd((1))
-                                # (+).leftd((1)):
-                                        self.first = (1)
-                                        self.second = expression(50)
-                                            expression(50):
-                                                t = token               # t = (2)
-                                                advance()               # advance() moves (*) into global token variable
-                                                left = t.nulld()        # left = (2).nulld()
-                                                                            (2).nulld() returns (2)
-                                                                            left = (2)
-                                                while rbp < token.lbp:      # while 50 < (*).lbp:
-                                                                                (*).lbp = 70
-                                                                                while 50 < 70:
-                                                    t = token                   # t = (*)
-                                                    advance()                   # advance() moves (3) into global token variable
-                                                    left = t.leftd(left)        # left = (*).leftd((2))
-                                                    return left                     # (*).leftd((2)):
-                                                                                        # self.first = (2)
-                                                                                        # self.second = expression(70):
-                                                                                            # expression(70):
-                                                                                                t = token               # t = (3)
-                                                                                                advance()               # advance moves EndTok into global token variable, as we're at the end of our token stream
-                                                                                                left = t.leftd(left)    # left = (3).leftd(parse tree from earlier)          
-
-
-        self.first = left
-        self.second = expression(70)
-        return self
-
-        return left 
-
-```
-
+[Pratt Parse a](https://github.com/joyjding/spot/blob/master/images/expression()a.pdf)
 
 
 
