@@ -173,9 +173,34 @@ PLY generates:
 
 	[LexToken(SCREENSAY,'Screensay',1,0), LexToken(COLON,':',1,9), LexToken(STRING,'"hello world."',1,11), LexToken(PERIOD,'.',1,25)]
 
-Then, I took the LexTokens, and mapped them 1:1 to Python class objects. This generates:
+Then, I took the LexTokens, and mapped them 1:1 to Python class token objects. This generates:
 
 	[ScreensayTok, ColonTok, StringTok, PeriodTok, EndTok] 
+
+### Parsing
+
+_Note: For the purposes of explaining parsing, methods on class objects that are not related to parsing will be left out._ 
+
+
+After the list of token objects is generated, parse() is called, and its results (an abstract syntax tree) will be saved to a program variable. 
+	
+```python
+program = parse()	
+```
+
+The parse function kicks off the parsing. It creates a global scope, which is used to store created variables and their assignments. 
+
+```python
+def parse():	
+	global scope
+	scope = Scope()
+	advance() #to put the first token in
+	p = Program()
+	p.statementd()	
+	return p
+```
+
+Then it calls advance(), a function that pops the first item off the class token list, and puts it into a global variable named token. It creates a new instance of the Program class, and calls statementd() on that new Program, which calls statement(). statement() checks if the token has a statementd() method, which means the token is the beginning of a larger statement. Otherwise, the token is evaluated as an expression. Essentially, this allows the parser to parse exactly one statement at a time, and determine whether to parse it as a statement or an expression. And here's where things get interesting, and we get into Pratt-style parsing.    
 
 
 ### Pratt Parser
@@ -227,11 +252,11 @@ You'll notice that each of these tokens has a `lbp` attribute, and that the AddO
 
 **leftd()** is the method that is called when there are other tokens to the left of the token the parser is looking at. Both the MulOpTok and the AddOpTok have leftd() methods because they are binary operators. So for an expression like 5+2, when the parser is considering the `+`, the `5` is still to the left of it, so leftd() is called. 
 
-**lbp** stands for left binding power. Left binding power is a number that represents how tightly a token "holds on" to the token to the left of it. Accordingly, it makes sense that the AddOpTok (`lbp=50`) would have a smaller lbp than the MulOpTok (`lbp=70`), as multiplication comes before addition in order of operations. 
+**lbp** stands for left binding power. Left binding power is a number that represents how tightly a token "holds on" to the partial expression to the left of it. Accordingly, it makes sense that the AddOpTok (`lbp=50`) would have a smaller lbp than the MulOpTok (`lbp=70`), as multiplication comes before addition in order of operations. 
 
 ###Pratt's expression function
 
-Okay, now we're ready to take a look at the heart of Pratt-style recursive descent parsing, the expression function. Implemented in Python, it looks something like this. 
+Okay, now we're ready to take a look at the heart of Pratt-style recursive descent parsing, the expression function. Implemented in Python, it looks something like this:
 
 ```python
 def expression(rbp=0):	    
@@ -244,6 +269,27 @@ def expression(rbp=0):
 	        left = t.leftd(left) 
 	    return left
 ```	    
+
+The advance function used looks like this:
+
+```python
+def advance(tok_class = None):
+	global token
+	#check if the current token is the one expected
+	if (tok_class and not isinstance(token, tok_class)):
+		raise SyntaxError("Expected %s but got %s" % (tok_class, token.__class__.__name__)) 
+	
+	current_token = token	
+
+	#if so, move on to the next token
+	token = class_tokens.pop(0)
+	return current_token
+```
+
+So at the beginning of an expression, the expression function is called, with a rbp (right binding power) of 0. Rbp is set to 0, because it is just a placeholder for when expression is later called with an lbp. For instance, the AddOpTok leftd() method calls expression(50). This also makes sense, because at this point, there is no partial expression to the right to bind to, as we are at the beginning of parsing an expression. 
+
+Then, the global token variable is saved as t. Advance is called without an argument, which means it pops the next Python class token object off of the list and saves it in the global token variable.  
+
 
 
 
