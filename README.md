@@ -294,7 +294,7 @@ At the beginning of an expression, the expression function is called, with a rbp
 Then, the global token variable is saved as t. In our case, the global token variable is `1`. Advance is called without an argument, which means it pops the next Python class token object off of the list and saves it in the global token variable. The nulld() method is called on the first token, and saved in the left variable.
 
 
-[Pratt Parse a](https://github.com/joyjding/spot/blob/master/images/expression_a.pdf)
+[Expression a](https://github.com/joyjding/spot/blob/master/images/expression_a.pdf)
 
 
 
