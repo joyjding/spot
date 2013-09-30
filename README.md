@@ -282,7 +282,7 @@ def advance(tok_class = None):
     return current_token
 ```
 
-Let's work through it with our previous example, `1+2*3` and the two parsing diagrams below. 
+Let's work through it with our previous example, `1+2*3`, using the two parsing diagrams below.
 
 #####Diagram A
 
@@ -290,14 +290,27 @@ Let's work through it with our previous example, `1+2*3` and the two parsing dia
 
 At the beginning of parsing an expression, the expression function is called, with a rbp (right binding power) of `0` ( **Step 1** ). Rbp is set to `0`, because it is just a placeholder for when expression is later called with an lbp. For instance, the AddOpTok leftd() method calls expression(50). This also makes sense, because at this point, there is no partial expression to the right to bind to, as we are at the beginning of parsing an expression. 
 
-Then, the global token variable is saved as t. In our case, the global token variable is `1`. Advance is called without an argument, which means it pops the next Python class token object off of the list and saves it in the global token variable. The nulld() method is called on the first token, and saved in the left variable. The while loop code executes because `0` is `<` the lbp of the add token. At the end of the while loop in **Step 1**, the `leftd()` method is called on t, which is currently `<+>`, which kicks off **Step 2**, the second calling of the expression function, this time passing in 50 for rbp. Then in **Step 3**, expression is called again, this time with the lbp of the `<*>`. But this time, when we get to the while loop, the condition of the while loop is false. `50` is not smaller than `0`, the lbp of EndTok ( **Step 4** ), so the while loop does not execute, bringing us to Diagram B, **Step 5**.
+Then, the global token variable is saved as `t`. In our case, the global token variable is `1`. Advance is called without an argument, which means it pops the next Python class token object off of the list and saves it in the global token variable. The `nulld()` method is called on the first token, and saved in the left variable. The while loop code executes because `0` is `<` the lbp of the add token. At the end of the while loop in **Step 1**, the `leftd()` method is called on t, which is currently `<+>`, which kicks off **Step 2**, the second calling of the expression function, this time passing in 50 for rbp. Then in **Step 3**, expression is called again, this time with the lbp of the `<*>`. But this time, when we get to the while loop, the condition of the while loop is false. `50` is not smaller than `0`, the lbp of EndTok ( **Step 4** ), so the while loop does not execute, bringing us to Diagram B, **Step 5**.
 
 #####Diagram B
 ![Expression b](https://raw.github.com/joyjding/spot/master/images/expression_b.png)
 
-In **Step 5**, left, the `<3>` token, is returned from `expression(70)`, and saved as the self.second attribute of `<+>` in `expression(50)`. So now, `left = t.leftd(left)` in `expression(50)` is complete, bringing us back to evaluate the while loop condition in `expression(50)`. And here's where the usage of the global token variable really shines. Because token is a global variable, now, when we evaluate `while rbp <token.lbp` we get `50 < EndTok.lbp`, which gives us '50 < 0'. This means that the while loop does not execute again, bringing us to **Step 7**. **Step 7** returns left, the `<*>` token with `<*>.first = <2>` and `<*>.second = <3>`. The entirety of the <*> token is then saved as the .second attribute of the `<+>` token in `expression(0)`. This brings us to **Step 8**, the evaluation of the while condition in `expression(0)`. Once again, `while rbp < token.lbp` gives us 'while 0 < <EndTok>.lbp', or 0 < 0. As 0 is not less than 0, the while loop does not execute, and we go straight to **Step 9**, which returns left, the entirety of the parse tree you see in **Step 10**. 
+In **Step 5**, left, the `<3>` token, is returned from `expression(70)`, and saved as the self.second attribute of `<+>` in `expression(50)`. So now, `left = t.leftd(left)` in `expression(50)` is complete, bringing us back to evaluate the while loop condition in `expression(50)`. And here's where the usage of the global token variable really shines. Because token is a global variable, now, when we evaluate `while rbp <token.lbp` we get `50 < EndTok.lbp`, which gives us '50 < 0'. This means that the while loop does not execute again, bringing us to **Step 7**. **Step 7** returns left, the `<*>` token with `<*>.first = <2>` and `<*>.second = <3>`. The entirety of the <*> token is then saved as the .second attribute of the `<+>` token in `expression(0)`. This brings us to **Step 8**, the evaluation of the while condition in `expression(0)`. Once again, `while rbp < token.lbp` gives us `while 0 < <EndTok>.lbp`, or `0 < 0`. As 0 is not less than 0, the while loop does not execute, and we go straight to **Step 9**, which returns left, the parse tree you see in **Step 10**. 
 
 _Whew! That was a lot of words and diagrams. I hope that this explanation is helpful. Please feel free to ask questions or give feedback, so it can be even more clear._
+
+### Interpretation
+
+Spot is interpreted in Python, an intermediate step created mostly to make sure that parsing worked correctly, and to play with some features of interpreted languages like string interpolation. 
+
+### Code gen
+
+Code gen for Spot is accomplished with the `codegen()` method on each token. The codegen methods take attribute information that has been saved during parsing, and write sequential strings of assembly code to a couple of different lists that are then used to generate an .asm file. A list of assembly commands is returned as the result of `program.codegen()`. All created variables and their sizes are added to a list called `literal_list`, which will later be used to generate the .data section of the .asm file. Then, all of the lists are written to a .asm file in order: first a header, then the assembly commands code, followed by the .data section code, and finally a footer.  
+
+####Thoughts on Code gen
+The most difficult part of code gen was learning x86 assembly. I had known from the very beginning of the project that I wanted to delve into assembly, because it would be the closest that I could get to machine code.
+
+
 
 
 
