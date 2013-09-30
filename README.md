@@ -284,12 +284,15 @@ def advance(tok_class = None):
 
 Let's work through it with our previous example, `1+2*3` and the diagram below. 
 
+#####Diagram A
+
 ![Expression a](https://raw.github.com/joyjding/spot/master/images/expression_a.png)
 
 At **Step 1**, the beginning of parsing an expression, the expression function is called, with a rbp (right binding power) of `0`. Rbp is set to `0`, because it is just a placeholder for when expression is later called with an lbp. For instance, the AddOpTok leftd() method calls expression(50). This also makes sense, because at this point, there is no partial expression to the right to bind to, as we are at the beginning of parsing an expression. 
 
 Then, the global token variable is saved as t. In our case, the global token variable is `1`. Advance is called without an argument, which means it pops the next Python class token object off of the list and saves it in the global token variable. The nulld() method is called on the first token, and saved in the left variable. The while loop code executes because `0` is `<` the lbp of the add token. At the end of the while loop in **Step 1**, the `leftd()` method is called on t, which is currently `<+>`, which kicks off **Step 2**, the second calling of the expression function, this time passing in 50 for rbp. Then in **Step 3**, expression is called again, this time with the lbp of the `<*>`. But this time, when we get to the while loop, the condition of the while loop is false. `50` is not smaller than `0`, the lbp of EndTok ( **Step 4** ).
 
+#####Diagram B
 ![Expression b](https://raw.github.com/joyjding/spot/master/images/expression_b.png)
 
 
