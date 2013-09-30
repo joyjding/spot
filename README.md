@@ -1,16 +1,19 @@
 #Spot language
 
-Hello there! So nice to meet you. 
 
-Driven by an ever-present curiousity about how things really work, the thrill of a challenge, and a love of languages and language processing, for my final HB project I chose to design and implement a programming language. Inspired by the simple language of See Spot Run, Spot is a language designed to expose the logic of programming to a beginning programmer using plain English syntax. Spot compiles to x86 assembly and its machinery from string to final compilation includes a PLY lexer, a Pratt recursive descent parser, and code generation functions that emit assembly.
+ Inspired by the simple language of See Spot Run, Spot is a language designed to expose the logic of programming to a beginning programmer using plain English syntax. Spot compiles to x86 assembly and its machinery from string to final compilation includes a PLY lexer, a Pratt recursive descent parser, and code generation functions that emit assembly.
 
-Spot was built in 3.5 weeks as my Hackbright personal project, and as such, is definitely a work in progress.  
+###Quick Links:
 
-Choose your own Spot adventure:
+- [Learn some Spot syntax](https://github.com/joyjding/spot#syntax-how-to-talk-to-your-computer-in-spot)
 
-- [I'd like to learn some Spot syntax!](https://github.com/joyjding/spot#syntax-how-to-talk-to-your-computer-in-spot)
+- [Code machinery](https://github.com/joyjding/spot#gears-gears-gears)
 
-- [Show me the code gears!](https://github.com/joyjding/spot#gears-gears-gears)
+
+
+###Background
+
+Hello there! So nice to meet you. Driven by an ever-present curiousity about how things really work, the thrill of a challenge, and a love of languages and language processing, I chose to design and implement a programming language for my Hackbright personal project. Spot was built in 3.5 weeks, and as such, is definitely a work in progress.  
 
 
 ###Getting Started: Setup, etc.
@@ -27,7 +30,7 @@ Run spot.py on your file of choice. This generates a filename.asm file.
     
     python spot.py <filename.spot>
 
-Then, take the asm file and run it through a nasm assembler, which generates an object file that you can then run as an executable.
+Then, take the asm file and run it through a nasm assembler, which generates an object file that you can then run as an executable. Note: Not all features work in compilation. 
 
 
 To run Spot in interpretation mode:
@@ -144,14 +147,6 @@ Here you see the code for fizzbuzz.spot :
     is equal to
     passing in the arguments
     follow these instructions
-
-
-
-
-
-
-
-
 
 
 ### Gears, gears, gears
