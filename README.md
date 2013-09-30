@@ -153,7 +153,7 @@ Here you see the code for fizzbuzz.spot :
 
 Spot is composed of several key parts: a PLY lexer, recursive descent parser, Python interpreter and x86 assembly code generator. 
 
-In brief, a file is read in and broken up into tokens by the PLY lexer and mapped 1:1 to Python class objects. The parser checks if a token object possesses a statement method. If the token has a statement method, it is parsed as a statement; otherwise, it is parsed as an expression using Pratt-style expression parsing. Parsing generates an abstract-syntax tree, which can then either be interpreted in Python using the eval() method on each token, or written into a .asm file using the codegen() method on each token.
+In brief, a file is read in and broken up into tokens by the PLY lexer and mapped 1:1 to Python class objects. The parser checks if a token object possesses a statement method. If the token has a statement method, it is parsed as a statement; otherwise, it is parsed as an expression using Pratt-style expression parsing. Parsing generates an abstract-syntax tree, which can then either be interpreted in Python using the eval() method on each token, or written into an .asm file using the codegen() method on each token.
 
 
 ### Lexing 
@@ -177,7 +177,7 @@ Then, I took the LexTokens, and mapped them 1:1 to Python class token objects. T
 _Note: For the purposes of explaining parsing, methods on class objects that are not related to parsing will be left out._ 
 
 
-After the list of token objects is generated, parse() is called, and its results (an abstract syntax tree) will be saved to a program variable. 
+After the list of token objects is generated, `parse()` is called, and its results (an abstract syntax tree) will be saved to a program variable. 
     
 ```python
 program = parse()   
@@ -195,7 +195,7 @@ def parse():
     return p
 ```
 
-Then it calls advance(), a function that pops the first item off the class token list, and puts it into a global variable named token. It creates a new instance of the Program class, and calls statementd() on that new Program, which calls statement(). statement() checks if the token has a statementd() method, which means the token is the beginning of a larger statement. Otherwise, the token is evaluated as an expression. Essentially, this allows the parser to parse exactly one statement at a time, and determine whether to parse it as a statement or an expression. And here's where things get interesting, and we get into Pratt-style parsing.    
+Then it calls `advance()`, a function that pops the first item off the class token list, and puts it into a global variable named token. It creates a new instance of the Program class, and calls `statementd()` on that new Program, which calls `statement()`. `statement()` checks if the token has a `statementd()` method, which means the token is the beginning of a larger statement. Otherwise, the token is evaluated as an expression. Essentially, this allows the parser to parse exactly one statement at a time, and determine whether to parse it as a statement or an expression. And here's where things get interesting, and we get into Pratt-style parsing.    
 
 
 ### Pratt Parser
@@ -205,6 +205,7 @@ Although code generation is well-documented, both examples that I drew on for co
 #### Why Pratt?
 
 Recursive-descent parsers are pretty efficient, so as long as the next action to take can most of the time be determined by what happens at the beginning of a statement. A recursive-descent parser checks the first token in a sequence, and then performs an appropriate action. 
+
 This is all well and fine until we get to expressions, for instance:
 
     1+2*3
@@ -213,7 +214,7 @@ In the case of `1+2*3` , the parser cannot simply take an action based on what i
 
 #### leftd(), nulld(), and lbp
 
-Before we dive into Pratt's expression function, we're going to need to know a couple of things first. And to help us out, we'll take a look at these three object classes: the add operator token (AddOpTok), the multiply operator token(MulOpTok), and the integer token (IntTok). _Note: Each of these tokens in my code also has an eval function and a codegen function, but I'm leaving them out in this tutorial, so we can focus on parsing._ 
+Before we dive into Pratt's expression function, we're going to need to know a couple of things first. And to help us out, we'll take a look at these three object classes: the add operator token (AddOpTok), the multiply operator token (MulOpTok), and the integer token (IntTok).
 
 ```python
 class AddOpTok(BinaryOpToken):
@@ -243,7 +244,7 @@ class IntTok(LiteralToken):
 
 You'll notice that each of these tokens has a `lbp` attribute, and that the AddOptok has both a `nulld()` and `leftd()` method, while the MulOpTok only has a `leftd()` and the IntTok only has a `nulld().`
 
-**nulld()** is the method that is called when the token appears at the beginning of an expression, and there is nothing (or null) before it. IntTok has a nulld() because you can start mathematical expressions, like `1+2` with an integer (in this case, `1`). Likewise, it makes sense that the add operator has a nulld(), because of expressions like `+4`. And yes, the subtract operator also has a nulld(), so negative numbers can be parsed correctly. 
+**nulld()** is the method that is called when the token appears at the beginning of an expression, and there is nothing (or null) before it. IntTok has a `nulld()` because you can start mathematical expressions, like `1+2` with an integer (in this case, `1`). Likewise, it makes sense that the add operator has a nulld(), because of expressions like `+4`. And yes, the subtract operator also has a nulld(), so negative numbers can be parsed correctly. 
 
 **leftd()** is the method that is called when there are other tokens to the left of the token the parser is looking at. Both the MulOpTok and the AddOpTok have leftd() methods because they are binary operators. So for an expression like 5+2, when the parser is considering the `+`, the `5` is still to the left of it, so leftd() is called. 
 
@@ -281,15 +282,16 @@ def advance(tok_class = None):
     return current_token
 ```
 
-Let's work through it with our previous example, `1+2*3`.
+Let's work through it with our previous example, `1+2*3` and the diagram below. 
 
+![Expression a](https://raw.github.com/joyjding/spot/master/images/expression_a.png)
 
 At the beginning of an expression, the expression function is called, with a rbp (right binding power) of 0. Rbp is set to 0, because it is just a placeholder for when expression is later called with an lbp. For instance, the AddOpTok leftd() method calls expression(50). This also makes sense, because at this point, there is no partial expression to the right to bind to, as we are at the beginning of parsing an expression. 
 
 Then, the global token variable is saved as t. In our case, the global token variable is `1`. Advance is called without an argument, which means it pops the next Python class token object off of the list and saves it in the global token variable. The nulld() method is called on the first token, and saved in the left variable.
 
 
-![Expression a](https://raw.github.com/joyjding/spot/master/images/expression_a.png)
+
 
 
 
