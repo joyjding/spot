@@ -1,41 +1,13 @@
 #!/usr/bin/env python
-#--TODOS
-
-
-#generate class tokens in PLY Lexer (not very important)
-#separate lexer file from tokenizer/parser (not very important)
-#parse declaration and assignment separately (I'd like this, but it's not super necessary)
-
-#create two classes for is versus equal to DO THIS IT IS IMPORTANT
-#add nud to true/false
-
-#anything that parses as part of an expression needs an lbp
-
-#Shiny bits:
-# Verb conjugations
-# Indents
-# I'd love to make all the math operators words...
-
-#Add program class
-#Add evaluate while behavior to while token
-# __doc__ returns the doc string
-#__getattribute__(...)
-#  x.__getattribute__('name') <==> x.name
-
-
-#--Qs
-# scope
-
-
 
 #########################################
-# TOKENIZER AND PARSER FOR SPOT LANGUAGE
+# SPOT LANGUAGE MACHINERY
 
-#imports#
+#imports
 import sys
 import ply.lex as lex #import ply library
 
-#globals#
+#globals
 token = None
 globalenv = {}
 if_count = 0
@@ -44,6 +16,7 @@ literal_list = []
 
 symbols = {}
 beyond = 0
+
 #----------------NOW WE LEX -----------------------------------------------------------------------------
 #PLY Lexer. Takes in a string --> lextokens
 #--------------------------------------------------------------------------------------------------------
@@ -163,12 +136,15 @@ def t_ELSE_IF_THE_CONDITION(t):
 def t_IF_NONE_CONDITION(t):
     r'[Ii]f\snone\sof\sthe\sprevious\sconditions\sare\strue'
     return t
+
 def t_ELSE(t):
     r'[Ee]lse'
     return t
+
 def t_A_AN(t):
-    r'[Aa]n'
+    r'[Aa]n[^d]'
     return t
+
 def t_POSS(t):
     r'\'(s)?'
     return t
@@ -215,12 +191,15 @@ def t_WHEN_CALLED(t):
 def t_FOLLOW_THESE_INSTRUCTIONS(t):
     r'[Ff]ollow(s)?\sthese\sinstructions'
     return t
+
 def t_RUN_THE_FUNCTION(t):
     r'[Rr]un\sthe\sfunction'
     return t
+
 def t_WITH_THE_ARGS(t):
     r'with\sthe\sarguments'
     return t
+
 def t_PASSING_IN_THE_ARGS(t):
     r'passing\sin\s(the)?\sargument(s)?'
     return t
@@ -313,11 +292,8 @@ class StringTok(LiteralToken):
                 new_statement_lex = make_lex_tokens(new_statement_string)
                 new_class_tok = make_class_tokens(new_statement_lex)
                 advance()
-                mini_e = statement() #something needs to change here
-                # print "statement", mini_e
+                mini_e = statement()
                 result = mini_e.eval(env)
-                # print "env", env
-                # print "mini_e.eval", result
                 result_string = str(result)
                 out_string.append(result_string)
                 string = string[end_brack+1:]
@@ -396,8 +372,22 @@ class ByTok(Token):
     pass
 class OrTok(Token):
     pass
-class AndTok(Token):
-    pass
+
+class AndTok(BinaryOpToken):
+    lbp = 30
+    def leftd(self, left):
+        self.first = left
+        self.second = expression(30)
+        return self
+    def eval(self, env):
+        if self.first.eval(env) and self.second.eval(env):
+            print ">>> Yes, both %s and %s are true" % (self.first, self.second)
+            return True
+        else:
+            print ">>> Nope, %s and %s are not both true" % (self.first, self.second)
+            return False
+
+    
 class ToTok(Token):
     pass
 class ItTok(Token):
@@ -423,8 +413,7 @@ class PassingInTheArgsTok(Token):
 
 class IntegerTypeTok(Token):
     def codegen():
-        return self.value
-    
+        return self.value   
 
 #Statement tokens
 class ReturnTok(Token):
@@ -995,7 +984,6 @@ class ScreenSayTok(Token):
         return "(%s): .string = %s" %(self.__class__.__name__, self.string) 
     def codegen(self):
         self.stringtok.codegen()
-        print literal_list
         # string = self.stringtok.codegen() #receive the string
         # return ["printf %s] % self.string_label
         commands = [
@@ -1162,6 +1150,7 @@ class GreaterThanOpTok(BinaryOpToken):
             return True
         else:
             print ">>> Nope, %s is not greater than %s" % (self.first, self.second)
+            return False
 
     def codegen(self):
 
@@ -1287,6 +1276,9 @@ class IncreaseTok(Token):
 
         variable = self.first.value
         prev_value = self.first.eval(env)
+
+        #print debugging
+        print "variable %s 's previous value is %s" %(variable, prev_value)
         
         if env.has_key(variable) == False:
             raise SyntaxError("This variable has not been created yet")
@@ -1501,20 +1493,20 @@ def main():
     lex_tokens = make_lex_tokens(source)
     
     #---lex print debugging---
-    # print "\n\n\nMAIN LEXING"
-    # print "-----Here are the lex tokens you ordered!"
-    # print lex_tokens
+    print "\n\n\nMAIN LEXING"
+    print "-----Here are the lex tokens you ordered!"
+    print lex_tokens
     
     class_tokens = make_class_tokens(lex_tokens)
     
-    # ---class token print debugging---
-    # print "\nMAIN CLASS TOKENIZING"
-    # print"-----These class tokens are steaming hot!"
-    # print class_tokens
+    #---class token print debugging---
+    print "\nMAIN CLASS TOKENIZING"
+    print"-----These class tokens are steaming hot!"
+    print class_tokens
     
     #parse the program
-    # print "MAIN PARSING" 
-    # print "-----Woo! Nothing's broken yet. About to parse now!"
+    print "MAIN PARSING" 
+    print "-----Woo! Nothing's broken yet. About to parse now!"
     program = parse()
     
     ## eval the program - Commented out for codegen
