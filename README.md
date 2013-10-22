@@ -37,7 +37,7 @@ To run Spot in interpretation mode:
     
 Run spot.py on your file of choice. 
     
-    python spot.py -eval <filename>
+    python spot.py <filename> -eval
 
 
 
