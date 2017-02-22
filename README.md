@@ -120,8 +120,8 @@ Here you see the code for fizzbuzz.spot :
 
     true
     false
-    [Rr]eturn (decide can only be capital?)
-    value (cap?)
+    [Rr]eturn
+    value
     takes
     a[n]
     by
